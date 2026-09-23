@@ -1,0 +1,61 @@
+import logging
+from datetime import datetime, timezone
+from typing import Any
+
+from fastapi import APIRouter, Depends, Response
+
+from app.deps import DbDep
+from app.security import verify_retell_signature
+from app.services import calls as calls_service
+
+logger = logging.getLogger("app.retell_webhook")
+
+router = APIRouter(
+    prefix="/retell",
+    tags=["retell-webhook"],
+    dependencies=[Depends(verify_retell_signature)],
+)
+
+HANDLED_EVENTS = {"call_started", "call_ended", "call_analyzed"}
+
+
+def _ms_to_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, (int, float)):
+        return None
+    return datetime.fromtimestamp(value / 1000, tz=timezone.utc)
+
+
+def _extract_call_fields(call: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "from_number": call.get("from_number"),
+        "to_number": call.get("to_number"),
+        "direction": call.get("direction"),
+        "status": call.get("call_status"),
+        "started_at": _ms_to_datetime(call.get("start_timestamp")),
+        "ended_at": _ms_to_datetime(call.get("end_timestamp")),
+        "duration_ms": (
+            call.get("end_timestamp") - call.get("start_timestamp")
+            if call.get("end_timestamp") and call.get("start_timestamp")
+            else None
+        ),
+        "disconnection_reason": call.get("disconnection_reason"),
+        "transcript": call.get("transcript"),
+        "recording_url": call.get("recording_url"),
+        "call_analysis": call.get("call_analysis"),
+    }
+
+
+@router.post("/webhook", status_code=204)
+async def retell_webhook(body: dict[str, Any], db: DbDep) -> Response:
+    event = body.get("event")
+    call = body.get("call") or {}
+    call_id = call.get("call_id")
+
+    if not call_id or event not in HANDLED_EVENTS:
+        logger.info("webhook event=%s ignored", event)
+        return Response(status_code=204)
+
+    fields = _extract_call_fields(call)
+    await calls_service.upsert_from_webhook(db, call_id, fields)
+    logger.info("webhook event=%s call_id=%s", event, call_id)
+    return Response(status_code=204)

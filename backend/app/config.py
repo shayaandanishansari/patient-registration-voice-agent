@@ -10,6 +10,14 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    mongodb_uri: str
+    mongodb_db: str = "patient_registration"
+
+    retell_api_key: str = ""
+    public_base_url: str = ""
+    api_read_key: str = ""
+    allow_unsigned_requests: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:
