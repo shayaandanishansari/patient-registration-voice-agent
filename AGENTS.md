@@ -11,10 +11,19 @@ appointment scheduling as an optional bonus.
 
 ## Where we are
 
-Backend is built: Retell tool endpoints, webhook, and read-only REST API are all
-implemented and tested against a real Atlas cluster (see Backend section below).
-Dashboard is planned but not scaffolded — see `dashboard/ARCHITECTURE.md`. Monorepo
-layout is `backend/` (FastAPI) + `dashboard/` (TypeScript/React), both at repo root.
+Backend is built and deployed: Retell tool endpoints, webhook, and read-only REST API
+are all implemented, tested against a real Atlas cluster, and live on Railway at
+`https://patient-registration-voice-agent-production-f401.up.railway.app`. The
+conversation flow has been pushed to Retell (`conversation_flow_0d5801eaa834`) via
+`scripts/deploy_retell_flow.py`, and the agent's webhook URL is set to
+`<that URL>/retell/webhook`. Dashboard is planned but not scaffolded — see
+`dashboard/ARCHITECTURE.md`. Monorepo layout is `backend/` (FastAPI) + `dashboard/`
+(TypeScript/React), both at repo root.
+
+Still open before a real phone call should be trusted: Railway's `ALLOW_UNSIGNED_REQUESTS`
+is currently `true` (left on from curl testing) — flip it to `false` and confirm
+`RETELL_API_KEY` is set on that service before going live, otherwise `/retell/*` accepts
+unsigned requests from anyone who finds the URL.
 
 Stack decisions: MongoDB Atlas via Motor (async) for the DB — verified working in
 `playground/db_connection/` before being wired into `backend/app/db.py`. Retell AI is
@@ -88,6 +97,9 @@ installed globally). `app/` layout, feature-grouped by technical concern:
 - `app/routers/retell_tools.py` — the four tool endpoints (`/retell/tools/*`).
 - `app/routers/retell_webhook.py` — `/retell/webhook` (`call_started`/`call_ended`/
   `call_analyzed`, idempotent upsert by `call_id`, never touches verification state).
+  Also exposes an unauthenticated `GET /retell/webhook` probe and tolerates an
+  empty/malformed POST body as a no-op — added after Retell's dashboard "Test" button
+  on the webhook URL turned out to send a plain connectivity check, not a real event.
 - `app/routers/api.py` — read-only `/api/*` (patients, calls, health), `X-API-Key`
   protected except `/api/health`.
 - `retell/conversation_flow.json` — the fixed tool contract (copied from
@@ -115,11 +127,10 @@ schema via `openapi-typescript` rather than hand-writing duplicate interfaces.
 
 ## Next steps
 
-1. Deploy `backend/` to Railway (root directory `backend/`, env vars per
-   `.env.example`, `railway.json` supplies the start command and health check).
-2. Get a real `RETELL_API_KEY` from the Retell dashboard, set `PUBLIC_BASE_URL` to the
-   Railway URL, run `python scripts/deploy_retell_flow.py`, then set the agent's webhook
-   URL to `<PUBLIC_BASE_URL>/retell/webhook` and assign it a phone number.
+1. On Railway, set `ALLOW_UNSIGNED_REQUESTS=false` and confirm `RETELL_API_KEY` is set,
+   then redeploy — currently still running with signature verification disabled.
+2. Confirm the Retell dashboard's webhook connectivity test passes against
+   `/retell/webhook` (GET probe + lenient POST added for this — see Backend section).
 3. Place a real call: register a patient, call back and verify, hear the record read
    back, update a field, and confirm a wrong DOB ends the call on the security path.
    Confirm the results show up via `/api/patients` and `/api/calls`.
