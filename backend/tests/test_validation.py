@@ -1,8 +1,11 @@
 import pytest
 
-from app.validation import (
+from app.core.validation import (
     ValidationError,
     normalize_email,
+    normalize_full_name,
+    normalize_insurance_member_id,
+    normalize_language,
     normalize_member_id,
     normalize_name,
     normalize_phone,
@@ -66,9 +69,18 @@ class TestDateOfBirth:
 
 
 class TestSex:
-    @pytest.mark.parametrize("value", ["male", "Female", "OTHER"])
-    def test_accepts_case_insensitive(self, value):
-        assert normalize_sex(value) == value.lower()
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("male", "Male"),
+            ("Female", "Female"),
+            ("OTHER", "Other"),
+            ("decline to answer", "Decline to Answer"),
+            ("prefer not to say", "Decline to Answer"),
+        ],
+    )
+    def test_maps_to_spec_values(self, value, expected):
+        assert normalize_sex(value) == expected
 
     def test_rejects_unknown(self):
         with pytest.raises(ValidationError):
@@ -77,10 +89,17 @@ class TestSex:
 
 class TestPhone:
     def test_accepts_valid_us_number(self):
-        assert normalize_phone("5125550123") == "+15125550123"
+        assert normalize_phone("5125550123") == "5125550123"
 
     def test_accepts_number_with_formatting(self):
-        assert normalize_phone("(512) 555-0123") == "+15125550123"
+        assert normalize_phone("(512) 555-0123") == "5125550123"
+
+    def test_accepts_country_code(self):
+        assert normalize_phone("+1 512 555 0123") == "5125550123"
+
+    def test_rejects_non_us_number(self):
+        with pytest.raises(ValidationError):
+            normalize_phone("+44 20 7946 0958")
 
     def test_rejects_too_short(self):
         with pytest.raises(ValidationError):
@@ -141,3 +160,22 @@ class TestMemberId:
     def test_rejects_empty(self):
         with pytest.raises(ValidationError):
             normalize_member_id("")
+
+
+class TestOptionalFields:
+    def test_insurance_member_id_compacts_spoken_form(self):
+        assert normalize_insurance_member_id("xyz 123-456") == "XYZ123456"
+
+    def test_insurance_member_id_rejects_symbols(self):
+        with pytest.raises(ValidationError):
+            normalize_insurance_member_id("ABC#123")
+
+    def test_language_capitalized(self):
+        assert normalize_language("spanish") == "Spanish"
+
+    def test_language_rejects_digits(self):
+        with pytest.raises(ValidationError):
+            normalize_language("42")
+
+    def test_full_name_allows_spaces(self):
+        assert normalize_full_name("Mary  Jane Watson", "contact") == "Mary Jane Watson"

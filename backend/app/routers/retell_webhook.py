@@ -4,11 +4,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
-from app.deps import DbDep
-from app.security import verify_retell_signature
+from app.core.database import DbDep
+from app.core.security import verify_retell_signature
 from app.services import calls as calls_service
 
-logger = logging.getLogger("app.retell_webhook")
+logger = logging.getLogger("app.routers.retell_webhook")
 
 # No signature dependency here: a bare GET connectivity check from the Retell
 # dashboard's "Test" button carries no signature to verify.
@@ -82,5 +82,19 @@ async def retell_webhook(request: Request, db: DbDep) -> dict[str, Any]:
 
     fields = _extract_call_fields(call)
     await calls_service.upsert_from_webhook(db, call_id, fields)
-    logger.info("webhook event=%s call_id=%s", event, call_id)
+    logger.info(
+        "webhook event=%s call_id=%s disconnection_reason=%s",
+        event,
+        call_id,
+        fields["disconnection_reason"],
+    )
+    # Conversation log (observability requirement). The transcript also
+    # lands on the calls document, linked to the patient via
+    # patients_created / verified_patient_id.
+    if event == "call_ended" and fields["transcript"]:
+        logger.info("call_transcript call_id=%s\n%s", call_id, fields["transcript"])
+    if event == "call_analyzed":
+        summary = (fields["call_analysis"] or {}).get("call_summary")
+        if summary:
+            logger.info("call_summary call_id=%s summary=%s", call_id, summary)
     return {"status": "ok"}

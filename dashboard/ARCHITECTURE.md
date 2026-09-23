@@ -1,73 +1,60 @@
-# Dashboard architecture (planned, not built yet)
+# Dashboard architecture
 
-Notes from design discussion before the dashboard is scaffolded. Mirrors the
-feature-based approach used for `backend/`.
+Read-only web UI over the backend's REST API: patients (with filters),
+patient detail (demographics, insurance, edit history, appointments, calls),
+and calls (transcript, summary, recording). Mirrors the feature-based
+approach used for `backend/`.
 
 ## Stack
 
-- **Vite + TypeScript** — internal SPA hitting the FastAPI backend, no SEO/SSR
-  need, so no Next.js.
-- **TanStack Query** for all server state (fetching patients/calls, caching,
-  loading/error states). Don't hand-roll fetch/useEffect data logic.
-- **React Router v7** for routing. TanStack Router is the more type-safe
-  alternative (route params compiler-checked) but less recognizable to a
-  reviewer skimming the code — default to React Router unless the stricter
-  typing becomes worth it.
-- **Zustand** only if cross-page client state is actually needed (e.g. a
-  filter shared between the calls list and a detail view). Don't reach for
-  Redux — this app doesn't have the state complexity to justify it.
-- **Tailwind + shadcn/ui** for styling/components — current default for
-  admin/data dashboards (tables, forms, detail panels).
-- **Vitest + React Testing Library** — pairs natively with Vite.
+- **Vite + TypeScript**: an internal SPA hitting the FastAPI backend. There's
+  no SEO/SSR need, so no Next.js.
+- **TanStack Query** for all server state (fetching, caching, pagination,
+  loading/error states). No hand-rolled fetch/useEffect data logic.
+- **React Router** for routing. TanStack Router is the more type-safe
+  alternative, but it's less recognizable to a reviewer skimming the code.
+- **Tailwind CSS** with a few small shared components in `src/components/`.
+  The app needs about six primitives, so shadcn/ui's CLI and generated files
+  weren't worth adding.
+- **Vitest + React Testing Library**, which pair natively with Vite.
+- **TypeScript 6**, pinned deliberately: TypeScript 7 (the native port)
+  doesn't ship the JS compiler API that `openapi-typescript` needs.
+
+No Zustand/Redux: the only cross-page state is the API key (sessionStorage)
+and the patient filters, which live in the URL.
 
 ## Structure
-
-Scoped to what this dashboard actually needs (patients, calls, maybe
-appointments for the scheduling bonus) — not a hypothetical enterprise app.
 
 ```
 dashboard/
   src/
-    app/                # routes, root layout, providers (QueryClient, router)
+    app/                 # router, layout, sign-in, route pages that compose features
     features/
-      patients/
-        api/            # TanStack Query hooks calling the backend
-        components/
-        types.ts
+      patients/          # api/ (query hooks), components/, types.ts, index.ts
       calls/
-        api/
-        components/
-        types.ts
-    components/         # shared, feature-agnostic UI (Table, Button, ...)
-    lib/                 # api client instance, query client config
-    types/               # generated API types (see below)
-  index.html
-  package.json
-  vite.config.ts
+      appointments/
+    components/          # shared, feature-agnostic UI (Card, Button, Badge, ...)
+    lib/                 # API client (envelope unwrapping), API key, formatting
+    types/api.d.ts       # generated from the backend's OpenAPI schema
 ```
+
+**Boundaries.** Each feature exposes its public surface through `index.ts`.
+Features never import from each other. When a page needs two features
+(patient detail shows calls and appointments), the composition happens in
+`app/routes.tsx`. `components/` and `lib/` never import from `features/`.
+This is enforced by convention for now; an ESLint `import/no-restricted-paths`
+rule would make it mechanical.
 
 ## Generated types, not hand-written duplicates
 
-The backend is FastAPI, which produces a free OpenAPI schema. Generate
-`src/types/api.d.ts` from it with `openapi-typescript` instead of hand-writing
-`Patient`/`Call` interfaces that would silently drift from the backend's
-pydantic models whenever either side changes. No shared `packages/` directory
-needed — just generate on build.
+`src/types/api.d.ts` is generated from the backend's OpenAPI schema
+(`npm run gen:api`), and feature `types.ts` files alias it
+(`components["schemas"]["PatientOut"]`). If a backend model changes, the
+compiler catches every mismatch here. Re-run `gen:api` after changing the
+backend's API models.
 
-## Boundary enforcement
+## Auth
 
-Add an ESLint `import/no-restricted-paths` rule (same idea as Bulletproof
-React) so:
-
-- `features/patients` cannot import directly from `features/calls`
-- `components/` and `lib/` can never import from `features/`
-
-Cheap to set up now, prevents tangled cross-feature imports once the app
-grows past two features.
-
-## Sources
-
-- https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md
-- https://www.robinwieruch.de/react-folder-structure/
-- https://devtoolbox.blog/tanstack-router-vs-react-router-v7-2026/
-- https://tanstack.com/start/latest/docs/framework/react/overview
+The REST API needs `X-API-Key`. The key is entered on a sign-in screen,
+checked against the API, and kept only in the tab's `sessionStorage`. It is
+never baked into the bundle, where anyone could read it.

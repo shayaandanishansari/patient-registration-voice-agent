@@ -69,7 +69,7 @@ async def test_webhook_never_overwrites_verification_state(client, db):
     call_id = "call-wh-3"
     await db.calls.update_one(
         {"call_id": call_id},
-        {"$set": {"verified_member_id": "12345678", "patients_created": ["12345678"]}},
+        {"$set": {"verified_patient_id": "p-1", "patients_created": ["p-1"]}},
         upsert=True,
     )
 
@@ -77,8 +77,8 @@ async def test_webhook_never_overwrites_verification_state(client, db):
     await post_signed(client, "/retell/webhook", body)
 
     call_doc = await db.calls.find_one({"call_id": call_id})
-    assert call_doc["verified_member_id"] == "12345678"
-    assert call_doc["patients_created"] == ["12345678"]
+    assert call_doc["verified_patient_id"] == "p-1"
+    assert call_doc["patients_created"] == ["p-1"]
 
 
 async def test_webhook_ignores_unknown_event(client, db):

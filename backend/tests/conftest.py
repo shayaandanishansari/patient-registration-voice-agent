@@ -6,18 +6,18 @@ from httpx import ASGITransport, AsyncClient
 from mongomock_motor import AsyncMongoMockClient
 from retell.lib.webhook_auth import symmetric
 
-from app.config import get_settings
-from app.db import Database
+from app.core.config import get_settings
+from app.core.database import Database
 from app.main import create_app
 
 TEST_RETELL_API_KEY = "test-retell-signing-key"
-TEST_API_READ_KEY = "test-api-read-key"
+TEST_API_KEY = "test-api-key"
 
 
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
     monkeypatch.setenv("RETELL_API_KEY", TEST_RETELL_API_KEY)
-    monkeypatch.setenv("API_READ_KEY", TEST_API_READ_KEY)
+    monkeypatch.setenv("API_KEY", TEST_API_KEY)
     monkeypatch.setenv("ALLOW_UNSIGNED_REQUESTS", "false")
     get_settings.cache_clear()
     yield
@@ -41,7 +41,9 @@ async def db(app):
 
 @pytest_asyncio.fixture
 async def client(app):
-    transport = ASGITransport(app=app)
+    # raise_app_exceptions=False so unhandled errors surface as the 500
+    # envelope a real client would see, not as a test-side exception.
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
@@ -76,3 +78,42 @@ def retell_tool_body(name: str, call_id: str, args: dict) -> dict:
         },
         "args": args,
     }
+
+
+API_HEADERS = {"x-api-key": TEST_API_KEY}
+
+# A complete, valid registration as the Retell flow sends it.
+VOICE_ARGS = {
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "date_of_birth": "1990-03-05",
+    "sex": "female",
+    "phone_number": "5125550123",
+    "address_line_1": "123 Main St",
+    "city": "Austin",
+    "state": "TX",
+    "zip_code": "78701",
+}
+
+
+async def register_by_voice(client, call_id: str, args: dict | None = None) -> dict:
+    response = await post_signed(
+        client,
+        "/retell/tools/create-patient",
+        retell_tool_body("create_patient", call_id, args or VOICE_ARGS),
+    )
+    return response.json()
+
+
+async def verify_by_voice(client, call_id: str, member_id: str, **overrides) -> dict:
+    args = {
+        "member_id": member_id,
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "date_of_birth": "1990-03-05",
+        **overrides,
+    }
+    response = await post_signed(
+        client, "/retell/tools/verify-patient", retell_tool_body("verify_patient", call_id, args)
+    )
+    return response.json()

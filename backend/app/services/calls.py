@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from app.db import Database
+from app.core.database import Database
 
 UTC = timezone.utc
 
@@ -21,28 +21,42 @@ async def touch_call(db: Database, call_id: str) -> None:
     )
 
 
-async def get_verified_member_id(db: Database, call_id: str) -> str | None:
-    doc = await db.calls.find_one({"call_id": call_id}, {"verified_member_id": 1})
-    return doc.get("verified_member_id") if doc else None
+async def get_verified_patient_id(db: Database, call_id: str) -> str | None:
+    doc = await db.calls.find_one({"call_id": call_id}, {"verified_patient_id": 1})
+    return doc.get("verified_patient_id") if doc else None
+
+
+async def get_call_patient_id(db: Database, call_id: str) -> str | None:
+    """The patient this call is acting for: the verified caller if there is
+    one, otherwise the most recent patient registered on this call."""
+    doc = await db.calls.find_one(
+        {"call_id": call_id}, {"verified_patient_id": 1, "patients_created": 1}
+    )
+    if not doc:
+        return None
+    if doc.get("verified_patient_id"):
+        return doc["verified_patient_id"]
+    created = doc.get("patients_created") or []
+    return created[-1] if created else None
 
 
 async def record_verification_attempt(
-    db: Database, call_id: str, member_id: str | None
+    db: Database, call_id: str, patient_id: str | None
 ) -> None:
     update: dict[str, Any] = {"$inc": {"verification_attempts": 1}}
-    if member_id is not None:
+    if patient_id is not None:
         update["$set"] = {
-            "verified_member_id": member_id,
+            "verified_patient_id": patient_id,
             "verified_at": datetime.now(UTC),
         }
     await db.calls.update_one({"call_id": call_id}, update, upsert=True)
 
 
-async def record_patient_created(db: Database, call_id: str, member_id: str) -> None:
+async def record_patient_created(db: Database, call_id: str, patient_id: str) -> None:
     await db.calls.update_one(
         {"call_id": call_id},
         {
-            "$addToSet": {"patients_created": member_id},
+            "$addToSet": {"patients_created": patient_id},
             "$setOnInsert": {"verification_attempts": 0},
         },
         upsert=True,
@@ -51,7 +65,7 @@ async def record_patient_created(db: Database, call_id: str, member_id: str) -> 
 
 async def upsert_from_webhook(db: Database, call_id: str, fields: dict[str, Any]) -> None:
     """Upsert call metadata from the Retell webhook. Never touches
-    verified_member_id, verified_at or patients_created — those are owned by
+    verified_patient_id, verified_at or patients_created — those are owned by
     the tool endpoints only."""
     fields = {k: v for k, v in fields.items() if v is not None}
     if not fields:
