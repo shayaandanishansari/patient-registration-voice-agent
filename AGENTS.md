@@ -46,7 +46,7 @@ and emergency disclaimer once implementation starts.
 | `docs/CONFIDENTIAL/` | Original brief from CareCloud (candidate-use-only) | No (gitignored) |
 | `backend/` | FastAPI backend — scaffolded, see below | Yes |
 | `dashboard/ARCHITECTURE.md` | Planned dashboard structure/stack (not built yet) | Yes |
-| `playground/` | Scratch/experiment space | No (gitignored) |
+| `playground/` | Scratch/experiment space — intentionally tracked, showcases testing patterns (DB connection, Retell API) | Yes |
 | `.idea/` | PyCharm project config — Python 3.14, Black formatter | No (gitignored) |
 
 ## Backend (`backend/`)
@@ -54,7 +54,7 @@ and emergency disclaimer once implementation starts.
 FastAPI, Python 3.14, no venv — run against the system interpreter (already has
 fastapi/pydantic/pytest/etc. installed globally). `src/` layout, feature-grouped by
 technical concern rather than a nested package name (`src/models`, `src/routes`,
-`src/services`, `src/config.py`, `src/deps.py`, `src/main.py`).
+`src/services`, `src/config.py`, `src/deps.py`, `src/app.py`).
 
 - `models/patient.py`, `models/call.py` — pydantic models generated directly from
   `docs/patient_field_spec.xlsx` (`Patients` and `Calls` sheets), including field

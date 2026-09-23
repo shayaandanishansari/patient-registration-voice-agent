@@ -1,0 +1,153 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1790185752514,
+  "agent_name": "Conversation Flow Agent",
+  "response_engine": {
+    "version": 0,
+    "conversation_flow_id": "conversation_flow_c004547fb282",
+    "type": "conversation-flow"
+  },
+  "language": "en-US",
+  "data_storage_setting": "everything",
+  "contact_memory_config": {
+    "enable_read": true,
+    "enable_update": false
+  },
+  "opt_in_signed_url": false,
+  "version": 0,
+  "assigned_tags": [],
+  "is_published": false,
+  "post_call_analysis_model": "gpt-5.6-terra",
+  "pii_config": {
+    "mode": "post_call",
+    "categories": []
+  },
+  "handbook_config": {
+    "default_personality": true,
+    "ai_disclosure": true
+  },
+  "timezone": "America/Los_Angeles",
+  "voice_id": "retell-Marissa",
+  "fallback_voice_ids": [],
+  "voice_temperature": 1,
+  "voice_speed": 1,
+  "volume": 1,
+  "enable_expressive_mode": false,
+  "max_call_duration_ms": 3600000,
+  "interruption_sensitivity": 0.9,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+  "conversationFlow": {
+    "conversation_flow_id": "conversation_flow_c004547fb282",
+    "version": 0,
+    "last_modification_timestamp": 1790191645014,
+    "nodes": [
+      {
+        "type": "conversation",
+        "skippable": false,
+        "name": "Welcome Node",
+        "instruction": {
+          "text": "Hello this is the customer support department, how can I help you today?",
+          "type": "prompt"
+        },
+        "id": "start-node-1790176810957",
+        "start_speaker": "agent",
+        "edges": [
+          {
+            "id": "edge-1",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "User needs to return the package"
+            },
+            "destination_node_id": "end-call-node-1790176810957"
+          },
+          {
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "User needs to check the order status"
+            },
+            "id": "edge-2"
+          }
+        ],
+        "display_position": {
+          "y": 433,
+          "x": 342
+        }
+      },
+      {
+        "type": "end",
+        "instruction": {
+          "text": "Politely end the call",
+          "type": "prompt"
+        },
+        "skippable": false,
+        "id": "end-call-node-1790176810957",
+        "name": "End Call",
+        "display_position": {
+          "x": 1206,
+          "y": 366
+        }
+      },
+      {
+        "id": "node-1790186576599",
+        "edges": [],
+        "else_edge": {
+          "id": "edge-1790186576599-5gdumqj9j",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Else"
+          }
+        },
+        "name": "Code",
+        "speak_during_execution": false,
+        "code": "",
+        "skippable": false,
+        "type": "code",
+        "display_position": {
+          "x": 750,
+          "y": 630
+        },
+        "enable_typing_sound": false,
+        "wait_for_result": true
+      },
+      {
+        "name": "Logic Split",
+        "else_edge": {
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Else"
+          },
+          "id": "edge-1790191635863-weryuiido"
+        },
+        "skippable": false,
+        "id": "node-1790191635863",
+        "display_position": {
+          "x": 894,
+          "y": 846
+        },
+        "type": "branch",
+        "edges": []
+      }
+    ],
+    "start_node_id": "start-node-1790176810957",
+    "start_speaker": "agent",
+    "model_choice": {
+      "high_priority": false,
+      "type": "cascading",
+      "model": "gpt-5-nano"
+    },
+    "tool_call_strict_mode": true,
+    "knowledge_base_ids": [],
+    "kb_config": {
+      "top_k": 3,
+      "filter_score": 0.6
+    },
+    "begin_tag_display_position": {
+      "y": 333,
+      "x": 122
+    },
+    "is_published": false,
+    "is_transfer_cf": false
+  }
+}
