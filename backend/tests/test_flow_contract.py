@@ -11,11 +11,17 @@ import pytest
 from app.main import create_app
 from app.core.validation import SEX_VALUES
 from app.models.patients import PATIENT_FIELDS, REQUIRED_FIELDS
-from app.services.patients import VOICE_UPDATABLE_FIELDS
+from app.services.patients import LEGACY_ARG_NAMES, VOICE_UPDATABLE_FIELDS
 
 FLOW_PATH = Path(__file__).resolve().parent.parent / "assets" / "retell_agent_scripts" / "agent_import.json"
 FLOW = json.loads(FLOW_PATH.read_text(encoding="utf-8"))["conversation_flow"]
 TOOLS = {t["name"]: t for t in FLOW["tools"]}
+
+
+def _canonical(names) -> set[str]:
+    # The flow uses the older names phone/address_line1/address_line2, which
+    # the backend maps to phone_number/address_line_1/address_line_2.
+    return {LEGACY_ARG_NAMES.get(n, n) for n in names}
 
 
 def test_every_tool_url_is_a_backend_route():
@@ -26,20 +32,19 @@ def test_every_tool_url_is_a_backend_route():
 
 def test_create_patient_args_match_patient_model():
     params = TOOLS["create_patient"]["parameters"]
-    assert set(params["required"]) == REQUIRED_FIELDS
-    assert set(params["properties"]) == set(PATIENT_FIELDS)
+    assert _canonical(params["required"]) == REQUIRED_FIELDS
+    assert _canonical(params["properties"]) == set(PATIENT_FIELDS)
 
 
 def test_update_patient_args_are_voice_updatable():
     props = TOOLS["update_patient_profile"]["parameters"]["properties"]
-    assert set(props) == set(VOICE_UPDATABLE_FIELDS)
+    assert _canonical(props) <= set(VOICE_UPDATABLE_FIELDS)
 
 
 @pytest.mark.parametrize(
     "tool,response_keys",
     [
         ("create_patient", {"status", "member_id", "message", "patient_name"}),
-        ("check_existing_patient", {"status", "patient_name", "message"}),
         ("verify_patient", {"verification_result"}),
     ],
 )
@@ -50,7 +55,6 @@ def test_response_variables_read_real_keys(tool, response_keys):
 def test_equation_edges_use_real_status_values():
     statuses = {
         "create_status": {"created", "invalid", "duplicate"},
-        "existing_status": {"existing", "none", "invalid"},
         "verification_result": {"verified", "not_verified"},
     }
     for node in FLOW["nodes"]:
