@@ -2,13 +2,17 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request
 
 from app.deps import DbDep
 from app.security import verify_retell_signature
 from app.services import calls as calls_service
 
 logger = logging.getLogger("app.retell_webhook")
+
+# No signature dependency here: a bare GET connectivity check from the Retell
+# dashboard's "Test" button carries no signature to verify.
+probe_router = APIRouter(prefix="/retell", tags=["retell-webhook"])
 
 router = APIRouter(
     prefix="/retell",
@@ -45,17 +49,38 @@ def _extract_call_fields(call: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-@router.post("/webhook", status_code=204)
-async def retell_webhook(body: dict[str, Any], db: DbDep) -> Response:
+@probe_router.get("/webhook")
+async def retell_webhook_probe() -> dict[str, str]:
+    """Retell's dashboard 'Test' / connectivity check may GET this URL before
+    ever sending a real event. No signature required for a plain reachability
+    check with no payload."""
+    return {"status": "ok"}
+
+
+@router.post("/webhook")
+async def retell_webhook(request: Request, db: DbDep) -> dict[str, Any]:
+    raw = await request.body()
+    if not raw:
+        # Retell's dashboard connectivity test may send an empty POST just to
+        # confirm the URL is reachable and returns 2xx.
+        logger.info("webhook empty_probe")
+        return {"status": "ok"}
+
+    try:
+        body: dict[str, Any] = await request.json()
+    except ValueError:
+        logger.info("webhook unparseable_body")
+        return {"status": "ok"}
+
     event = body.get("event")
     call = body.get("call") or {}
     call_id = call.get("call_id")
 
     if not call_id or event not in HANDLED_EVENTS:
         logger.info("webhook event=%s ignored", event)
-        return Response(status_code=204)
+        return {"status": "ok"}
 
     fields = _extract_call_fields(call)
     await calls_service.upsert_from_webhook(db, call_id, fields)
     logger.info("webhook event=%s call_id=%s", event, call_id)
-    return Response(status_code=204)
+    return {"status": "ok"}

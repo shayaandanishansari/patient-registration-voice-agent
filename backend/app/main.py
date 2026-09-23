@@ -46,6 +46,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(retell_tools.router)
+    app.include_router(retell_webhook.probe_router)
     app.include_router(retell_webhook.router)
     app.include_router(api.router)
 
