@@ -1,3 +1,13 @@
 docs/CONFIDENTIAL
-playground
 .idea
+
+# env / secrets
+.env
+.env.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
