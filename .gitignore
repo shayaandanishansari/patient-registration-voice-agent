@@ -3,7 +3,10 @@ docs/CONFIDENTIAL
 
 # env / secrets
 .env
-.env.local
+*.env
+.env.*
+!.env.example
+!.env.*.example
 
 # python
 __pycache__/
