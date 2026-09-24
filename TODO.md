@@ -35,10 +35,10 @@ In order.
 
 ## 3. Make AGENTS.md and the READMEs accurate
 
-- [ ] Remove features the agent doesn't have (Spanish switching, start over, 911
-      greeting, appointment booking in the call).
+- [x] Remove features the agent doesn't have (start over, 911 greeting, appointment
+      booking in the call). Multi-language turned out to be real and is now documented.
 - [ ] Document the event log, `/logs`, the docs page and the system diagram.
-- [ ] Fill in the Retell phone number (the `TODO` in `README.md`).
+- [x] Fill in the Retell phone number (the `TODO` in `README.md`).
 
 ## 4. Upload the latest agent and test it
 

@@ -12,11 +12,10 @@ kind of phone line this is, and why verification works the way it does).
 caller (phone)
    |
    v
-Retell AI  -- telephony, speech-to-text, text-to-speech, and the LLM (GPT-4.1)
+Retell AI  -- telephony, speech-to-text, text-to-speech, and the LLM (Claude Sonnet 5)
    |          running the conversation flow in
    |          assets/retell_agent_scripts/agent.json
    |
-   +--> POST /retell/tools/check-existing-patient  }
    +--> POST /retell/tools/create-patient          }  tool calls made
    +--> POST /retell/tools/verify-patient          }  during the live call
    +--> POST /retell/tools/get-patient             }  (signed with
@@ -36,6 +35,9 @@ MongoDB Atlas — collections: patients, calls, logs
    |
 REST API: /patients (CRUD), /calls, /logs, /stats, /health
 ```
+
+A fifth endpoint, `check-existing-patient`, runs the duplicate check on its
+own. It's tested but not called by the current flow.
 
 **Separation of concerns.** Retell owns telephony, speech and the LLM, and
 the conversation flow decides *what to say*. The backend decides *what is
@@ -149,43 +151,43 @@ that step's prompt.
 ### Conversation flow
 
 ```
-welcome (emergency/911 disclaimer, "register, check/update, or book?")
- ├─ register ─> reg_collect_identity (name spelled, DOB, sex, phone)
- │               └─> check_existing_patient
- │                    ├─ existing ─> reg_existing: "It looks like we already have a
- │                    │              record for Jane Doe. Would you like to update
- │                    │              your information instead?" ─> verify_collect
- │                    ├─ invalid ──> reg_fix_identity (re-ask that one field)
- │                    └─ none ─────> reg_collect_details (address, email, then offers
- │                                   insurance / emergency contact / language)
- │                                   ─> full read-back ─> caller confirms
- │                                   ─> create_patient
- │                                        ├─ created ─> reg_success ("You're all set, Jane",
- │                                        │             member ID read in groups)
- │                                        ├─ invalid ─> reg_fix (re-ask that one field)
- │                                        ├─ duplicate ─> reg_existing
- │                                        └─ error/timeout ─> system_error (spoken apology)
- ├─ check/update ─> verify_collect (member ID + full name + DOB) ─> verify_patient
- │                   ├─ verified ─> manage_profile (read back / update)
- │                   └─ not verified ─> verify_failed (ends call, reveals nothing)
+welcome ("register, or check/update an existing registration?")
+ ├─ register ─> reg_collect (name spelled and spelled back, DOB, sex, phone,
+ │               address; optional email, insurance, emergency contact, language)
+ │               ─> full read-back ─> caller confirms
+ │               ─> reg_create (create_patient)
+ │                    ├─ created ─> reg_success (member ID read in groups)
+ │                    ├─ invalid ─> reg_fix (re-ask that one field) ─> reg_create
+ │                    └─ else (duplicate, error, timeout) ─> system_error (apology, ends call)
+ ├─ check/update ─> verify_collect (member ID + full name + DOB, read back)
+ │                   ─> verify_check (verify_patient)
+ │                        ├─ verified ─> manage_profile (read back / update, via
+ │                        │              get_patient_profile, update_patient_profile)
+ │                        └─ else ─> verify_failed (ends call, reveals nothing)
  ├─ forgot member ID ─> forgot_member_id (in person with photo ID, or register)
- └─ start_over (global node: reachable from anywhere)
+ └─ nothing needed ─> end_goodbye
 ```
+
+Every conversation node can reach `end_goodbye` when the caller wants to
+stop, and the three closing lines are spoken in the caller's language.
 
 ### Prompt design, and why
 
 - **One identity and scope in the global prompt.** Sarah is a registration
-  coordinator, not a clinician. That keeps the agent out of triage. The 911
-  disclaimer is part of the greeting itself, not left to the model's
-  judgement.
-- **Collect in two phases.** Identity and phone come first, so the
-  duplicate check runs *before* the caller spends two minutes on their
-  address. It also lets an invalid DOB or a 3-digit phone number be
-  re-asked right away.
-- **Out-of-order answers and corrections are handled in the prompt.** "Accept
-  whatever they give, keep it, only ask for what is still missing." A
-  correction replaces the value and is confirmed on its own. The final
-  read-back covers every field before anything is saved.
+  coordinator, not a clinician. That keeps the agent out of triage.
+  Appointments, billing, test results and medical questions go to the front
+  desk. A caller who describes a medical emergency is told to hang up and
+  call 911. That's a scope rule, not an opening disclaimer, so the greeting
+  stays short.
+- **Security rules in the global prompt, enforced again on the server.**
+  Nothing about a record is said before member ID + full name + DOB verify,
+  a failure never says which detail was wrong, and a member ID is never
+  looked up by name or DOB.
+- **Nothing is saved until the caller confirms a full read-back.** Names
+  and emails are spelled back letter by letter at collection and again in
+  the summary, so a mishearing is caught before it becomes a record.
+- **Out-of-order answers and corrections are handled in the prompt.** A
+  correction replaces the value and only the corrected part is read back.
 - **Voice-specific formatting rules.** Names and emails are spelled out,
   numbers read digit by digit in groups, dates spoken as words. The model
   never reads lists or formatting aloud.
@@ -196,34 +198,49 @@ welcome (emergency/911 disclaimer, "register, check/update, or book?")
   record.
 - **Validation messages are written to be spoken.** Every backend validation
   error is one short sentence the agent can say as-is ("The date of birth
-  can't be in the future."). The flow's fix-up nodes re-ask only the failing
-  field.
-- **Spanish.** The agent language is `["en-US", "es-419"]`. On "Hablo
-  español" the prompt switches the rest of the call, read-backs included,
-  to Spanish, while tool arguments keep their canonical formats.
+  can't be in the future."). `reg_fix` re-asks only the failing field.
+- **Branching is on values the server returns**, not on the model's reading
+  of them: `create_status` and `verification_result` drive equation edges.
+  `tests/test_flow_contract.py` checks those values, the tool URLs and the
+  argument names against the backend.
+- **Languages.** The agent is configured for 12 locales (`en-US`, `en-GB`,
+  `en-IN`, `es-ES`, `es-419`, `zh-CN`, `fr-FR`, `de-DE`, `hi-IN`, `ru-RU`,
+  `it-IT`, `pt-PT`). On "Hablo español" the call continues in Spanish, while
+  tool arguments keep their canonical formats.
 
 ## Edge cases
 
 | Scenario | What happens |
 |---|---|
-| Invalid DOB / 3-digit phone | The server rejects it with a speakable reason. The flow re-asks only that field (at the identity step, or `reg_fix` after the read-back). |
+| Invalid DOB / 3-digit phone | The server rejects it with a speakable reason. `reg_fix` re-asks only that field, then saves again. |
 | Caller corrects a field ("D-A-V-I-S, not D-A-V-I-E-S") | The prompt replaces the value and confirms just that field. The full read-back before saving catches anything missed. |
-| Caller wants to start over | Global `start_over` node, reachable from any point. Unsaved details are discarded. If a record was already saved, the agent says so. |
+| Caller wants to start over | No dedicated node. Nothing is saved before the confirmed read-back, so the model re-collects within `reg_collect`. Once saved, changes go through verification and `manage_profile`. |
 | Database write fails | The tool returns HTTP 500 and Retell takes the else-edge to `system_error`, which apologizes and ends the call. There is never silence (see `test_db_failure_returns_error_not_silence`). |
 | Tool call retried by Retell | `create-patient` is idempotent per call + name + DOB. Updates are naturally idempotent. |
-| Call drops mid-registration | Nothing is written until the caller confirms the read-back, so there are no half-records. The webhook still records the call, its transcript and its `disconnection_reason`. On the next call they start over, and if they had finished, the duplicate check recognizes them. |
-| Returning caller registers again | The duplicate check (phone + name + DOB) offers to update instead. |
+| Call drops mid-registration | Nothing is written until the caller confirms the read-back, so there are no half-records. The webhook still records the call, its transcript and its `disconnection_reason`. On the next call they start over. |
+| Returning caller registers again | The server refuses the duplicate (phone + name + DOB), but the flow has no branch for it yet, so it reaches `system_error` and Sarah says she had trouble saving. Callers who say they are registered are routed to verification instead. |
 | Household sharing one phone | A phone match alone isn't treated as a duplicate: a household member with a different name or DOB registers normally. |
 | Wrong verification details | One generic failure message, then the call ends. Which detail was wrong is never revealed. Soft-deleted patients can't verify. |
 
 ## Observability
 
-Structured log lines go to stdout (Railway's log view):
-`patient_created ... payload={...}` / `patient_updated ... payload={...}` with
-the final collected data, one `tool=... status=...` line per tool call, and
-the full transcript (`call_transcript`) and summary (`call_summary`) from
-the webhook. Transcripts are also stored on the `calls` document, linked to
-the patient.
+Modules log through `core/logger.py`'s `EventLogger`: one structured line
+per event to stdout (Railway's log view), also batched into the `logs`
+collection (90-day TTL) and readable at `GET /logs` and on the dashboard.
+Every record carries its request's `request_id` (also the `X-Request-ID`
+response header).
+
+- `http_request`: one per request.
+- `retell_tool`: one per tool call, with the arguments Retell sent and the
+  response.
+- `retell_webhook`: the full webhook body. `call_ended` carries the
+  transcript and `call_analyzed` the summary; both are also stored on the
+  `calls` document, linked to the patient.
+- `patient_created` / `patient_updated` with the final payload, plus
+  `patient_duplicate_detected`, `patient_create_replayed` and
+  `patient_deleted`.
+
+A MongoDB failure only drops log records; it never fails a request.
 
 ## Running locally
 
@@ -272,6 +289,8 @@ python -m pytest -q    # mongomock-motor, no real database needed
   about appointments are sent to the front desk. A mock scheduling backend
   is kept on the `feature/appointment-scheduling` branch.
 - **One shared API key**, not per-user auth or roles.
+- **A duplicate registration has no branch in the flow.** It ends in
+  `system_error` instead of an offer to verify and update.
 - **Duplicate detection needs name + DOB + phone together.** A patient who
   changed their phone number won't be caught; a person merges those records
   in person.
@@ -280,6 +299,7 @@ python -m pytest -q    # mongomock-motor, no real database needed
 
 ## Next steps
 
+- Branch the flow on a duplicate at create: offer to verify and update.
 - A lockout or escalation to a human after N failed verifications across calls.
 - Per-user dashboard auth, and PHI redaction in logs.
 - Scheduling as its own line or agent, backed by a provider calendar.
