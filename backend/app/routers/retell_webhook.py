@@ -22,6 +22,10 @@ router = APIRouter(
 
 HANDLED_EVENTS = {"call_started", "call_ended", "call_analyzed"}
 
+# The Retell dashboard's webhook "Test" button sends a signed call_started for
+# this ID and never a call_ended, so storing it would leave a call "Live" forever.
+TEST_CALL_ID = "test_call"
+
 
 def _ms_to_datetime(value: Any) -> datetime | None:
     if not isinstance(value, (int, float)):
@@ -81,7 +85,7 @@ async def retell_webhook(request: Request, db: DbDep) -> dict[str, Any]:
     # summary. Both also land on the calls document, linked to the patient.
     log.info("retell_webhook", webhook_event=event, call_id=call_id, body=body)
 
-    if not call_id or event not in HANDLED_EVENTS:
+    if not call_id or call_id == TEST_CALL_ID or event not in HANDLED_EVENTS:
         return {"status": "ok"}
 
     await calls_service.upsert_from_webhook(db, call_id, _extract_call_fields(call))

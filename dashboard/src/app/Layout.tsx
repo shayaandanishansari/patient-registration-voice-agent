@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router";
 
 import { Button } from "@/components/Button";
 
+import { RefreshButton } from "./RefreshButton";
+
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-lg px-3 py-1.5 text-sm font-medium ${
     isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:bg-slate-100"
@@ -34,11 +36,14 @@ export function Layout({ onSignOut }: { onSignOut?: () => void }) {
               </NavLink>
             </nav>
           </div>
-          {onSignOut && (
-            <Button variant="ghost" onClick={onSignOut}>
-              Sign out
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <RefreshButton />
+            {onSignOut && (
+              <Button variant="ghost" onClick={onSignOut}>
+                Sign out
+              </Button>
+            )}
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">

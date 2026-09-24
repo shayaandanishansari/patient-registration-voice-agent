@@ -103,3 +103,10 @@ async def test_webhook_stores_call_cost(client, db):
 
     call_doc = await db.calls.find_one({"call_id": "call-wh-cost"})
     assert call_doc["call_cost"] == cost
+
+
+async def test_webhook_ignores_retell_test_button(client, db):
+    body = _webhook_body("call_started", "test_call", call_status="ongoing")
+    response = await post_signed(client, "/retell/webhook", body)
+    assert response.status_code == 200
+    assert await db.calls.find_one({"call_id": "test_call"}) is None

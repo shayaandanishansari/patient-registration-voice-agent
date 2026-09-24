@@ -6,30 +6,7 @@ import { dash, formatCents, formatDateTime, formatDuration } from "@/lib/format"
 
 import { callCost } from "../cost";
 import type { Call } from "../types";
-
-// Retell transcripts are "Agent: ...\nUser: ..." lines; render them as a chat.
-function TranscriptLines({ transcript }: { transcript: string }) {
-  const lines = transcript.split("\n").filter((line) => line.trim());
-  return (
-    <ol className="space-y-2 text-sm">
-      {lines.map((line, i) => {
-        const [speaker, ...rest] = line.split(":");
-        const isAgent = speaker.trim().toLowerCase() === "agent";
-        return (
-          <li key={i} className={`flex ${isAgent ? "" : "justify-end"}`}>
-            <p
-              className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${
-                isAgent ? "bg-slate-100 text-slate-800" : "bg-brand-600 text-white"
-              }`}
-            >
-              {rest.length ? rest.join(":").trim() : line}
-            </p>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
+import { TranscriptLines } from "./Transcript";
 
 export function CallDetail({ call }: { call: Call }) {
   const summary = call.call_analysis?.["call_summary"];
