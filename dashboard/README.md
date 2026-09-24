@@ -70,8 +70,9 @@ and the patient filters, which live in the URL.
 **Possible duplicates.** The phone line registers a returning caller who has
 no member ID as a new patient and never mentions the existing record (see the
 root README). Staff find those pairs here: an Overview tile, a "Possible
-duplicates" card on the patient page, and a Patients filter. All three read
-backend endpoints that compute the pairs on request.
+duplicates" card on the patient page, a "Possible duplicate" badge on those
+rows in the Patients table, and a Patients filter. All of them read backend
+endpoints that compute the pairs on request.
 
 ## Structure
 

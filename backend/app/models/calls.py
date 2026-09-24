@@ -20,6 +20,11 @@ class CallOut(BaseModel):
     transcript: str | None = None
     recording_url: str | None = None
     call_analysis: dict[str, Any] | None = None
+    call_cost: dict[str, Any] | None = Field(
+        default=None,
+        description="Retell's charge for the call, in cents: combined_cost, and "
+        "product_costs per product (LLM, voice engine, TTS, telephony).",
+    )
     verified_patient_id: str | None = Field(
         default=None, description="patient_id this call verified as, if any."
     )

@@ -2,8 +2,9 @@ import { Link } from "react-router";
 
 import { Card } from "@/components/Card";
 import { DescriptionList } from "@/components/DescriptionList";
-import { dash, formatDateTime, formatDuration } from "@/lib/format";
+import { dash, formatCents, formatDateTime, formatDuration } from "@/lib/format";
 
+import { callCost } from "../cost";
 import type { Call } from "../types";
 
 // Retell transcripts are "Agent: ...\nUser: ..." lines; render them as a chat.
@@ -35,6 +36,7 @@ export function CallDetail({ call }: { call: Call }) {
   const patientLinks = [...(call.patients_created ?? []), call.verified_patient_id]
     .filter((id): id is string => Boolean(id))
     .filter((id, i, all) => all.indexOf(id) === i);
+  const cost = callCost(call);
 
   return (
     <div className="space-y-6">
@@ -46,6 +48,20 @@ export function CallDetail({ call }: { call: Call }) {
             ["From", dash(call.from_number)],
             ["To", dash(call.to_number)],
             ["Duration", formatDuration(call.duration_ms)],
+            [
+              "Cost",
+              cost ? (
+                <span>
+                  {formatCents(cost.totalCents)}
+                  <span className="text-slate-500">
+                    {" · "}
+                    {cost.parts.map((p) => `${p.label} ${formatCents(p.cents)}`).join(" · ")}
+                  </span>
+                </span>
+              ) : (
+                "—"
+              ),
+            ],
             ["Ended because", dash(call.disconnection_reason?.replaceAll("_", " "))],
             ["Verification attempts", String(call.verification_attempts ?? 0)],
             [

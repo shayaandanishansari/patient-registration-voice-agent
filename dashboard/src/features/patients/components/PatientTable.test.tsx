@@ -47,6 +47,24 @@ describe("PatientTable", () => {
     expect(await screen.findByText("detail page")).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/patients/p-1");
   });
+
+  it("marks only the records flagged as possible duplicates", () => {
+    const other = { ...patient, patient_id: "p-2", first_name: "John" };
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/patients",
+          element: <PatientTable patients={[patient, other]} duplicateIds={new Set(["p-1"])} />,
+        },
+      ],
+      { initialEntries: ["/patients"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const badges = screen.getAllByText("Possible duplicate");
+    expect(badges).toHaveLength(1);
+    expect(badges[0].closest("tr")).toHaveTextContent("Doe, Jane");
+  });
 });
 
 describe("PatientProfile", () => {

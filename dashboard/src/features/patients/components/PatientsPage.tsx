@@ -4,7 +4,7 @@ import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Empty, ErrorMessage, Loading } from "@/components/QueryState";
 
-import { usePatients } from "../api/queries";
+import { useDuplicateIds, usePatients } from "../api/queries";
 import type { PatientFilters } from "../types";
 import { PatientFiltersForm } from "./PatientFiltersForm";
 import { PatientTable } from "./PatientTable";
@@ -24,6 +24,7 @@ export function PatientsPage() {
   const [params, setParams] = useSearchParams();
   const filters = filtersFromParams(params);
   const query = usePatients(filters);
+  const duplicateIds = useDuplicateIds().data;
   const patients = query.data?.pages.flatMap((page) => page.items) ?? [];
 
   function applyFilters(next: PatientFilters) {
@@ -55,7 +56,7 @@ export function PatientsPage() {
           <Empty>No patients match these filters.</Empty>
         ) : (
           <>
-            <PatientTable patients={patients} />
+            <PatientTable patients={patients} duplicateIds={duplicateIds} />
             {query.hasNextPage && (
               <div className="mt-4 flex justify-center">
                 <Button

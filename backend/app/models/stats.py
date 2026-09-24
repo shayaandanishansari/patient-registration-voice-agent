@@ -26,5 +26,10 @@ class StatsOut(BaseModel):
         "and phone). Voice registers them anyway rather than reveal a record to "
         "an unverified caller; staff merge them in person."
     )
+    spend_cents_24h: float = Field(
+        description="Retell's charge (call_cost.combined_cost) for calls started "
+        "in the last 24h, in cents. Calls whose cost hasn't arrived yet count as 0."
+    )
+    spend_cents_total: float
     errors_24h: int = Field(description="ERROR and CRITICAL log records.")
     warnings_24h: int

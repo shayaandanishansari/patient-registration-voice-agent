@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatAgo, formatDob, formatDuration, formatPhone } from "./format";
+import { formatAgo, formatCents, formatDob, formatDuration, formatPhone } from "./format";
 
 describe("format", () => {
   it("formats 10-digit phone numbers", () => {
@@ -10,6 +10,12 @@ describe("format", () => {
 
   it("shows DOB as MM/DD/YYYY", () => {
     expect(formatDob("1990-03-05")).toBe("03/05/1990");
+  });
+
+  it("formats Retell's cents as dollars", () => {
+    expect(formatCents(10.28)).toBe("$0.10");
+    expect(formatCents(1234.5)).toBe("$12.35");
+    expect(formatCents(null)).toBe("—");
   });
 
   it("formats call durations", () => {

@@ -46,6 +46,7 @@ def _extract_call_fields(call: dict[str, Any]) -> dict[str, Any]:
         "transcript": call.get("transcript"),
         "recording_url": call.get("recording_url"),
         "call_analysis": call.get("call_analysis"),
+        "call_cost": call.get("call_cost"),
     }
 
 

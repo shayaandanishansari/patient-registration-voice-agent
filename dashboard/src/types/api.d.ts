@@ -318,6 +318,13 @@ export interface components {
                 [key: string]: unknown;
             } | null;
             /**
+             * Call Cost
+             * @description Retell's charge for the call, in cents: combined_cost, and product_costs per product (LLM, voice engine, TTS, telephony).
+             */
+            call_cost?: {
+                [key: string]: unknown;
+            } | null;
+            /**
              * Verified Patient Id
              * @description patient_id this call verified as, if any.
              */
@@ -667,6 +674,13 @@ export interface components {
              * @description People with more than one active record (same name, DOB and phone). Voice registers them anyway rather than reveal a record to an unverified caller; staff merge them in person.
              */
             possible_duplicates: number;
+            /**
+             * Spend Cents 24H
+             * @description Retell's charge (call_cost.combined_cost) for calls started in the last 24h, in cents. Calls whose cost hasn't arrived yet count as 0.
+             */
+            spend_cents_24h: number;
+            /** Spend Cents Total */
+            spend_cents_total: number;
             /**
              * Errors 24H
              * @description ERROR and CRITICAL log records.

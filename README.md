@@ -75,7 +75,7 @@ Phone call ⇄ Retell AI (telephony + STT/TTS + Claude Sonnet 5 conversation flo
 |---|---|
 | [`backend/`](backend/README.md) | FastAPI service, tests, and the Retell agent export (`assets/retell_agent_scripts/agent.json`, which contains the full system prompt and conversation flow) |
 | [`dashboard/`](dashboard/README.md) | Web UI over the API. Its production build is committed to `backend/assets/dashboard/` and served at `/dashboard` |
-| [`docs/`](docs/README.md) | [Design decisions](docs/design-decisions.md), the design memo on what kind of phone line this is, the system diagram, [every API route](docs/api-routes.md), the field spec, and the security review ([`docs/security.md`](docs/security.md)). All of them are also on the dashboard's Docs page. |
+| [`docs/`](docs/README.md) | [Design decisions](docs/design-decisions.md), the design memo on what kind of phone line this is, the system diagram, [every API route](docs/api-routes.md), [running costs](docs/costs.md), the field spec, and the security review ([`docs/security.md`](docs/security.md)). All of them are also on the dashboard's Docs page. |
 | `playground/` | Early experiments (DB connection, Retell API) kept as a record of the testing approach |
 
 **[`backend/README.md`](backend/README.md) is the detailed write-up.** It

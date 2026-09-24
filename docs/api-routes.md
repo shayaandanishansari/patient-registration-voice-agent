@@ -41,11 +41,11 @@ Read-only views of what the voice agent did.
 
 | Method | Path | Auth | What it does |
 |---|---|---|---|
-| `GET` | `/calls` | API key | Calls, newest first: status, duration, transcript, summary, recording link. `patient_id` narrows the list to calls that registered or verified that patient. |
+| `GET` | `/calls` | API key | Calls, newest first: status, duration, cost, transcript, summary, recording link. `patient_id` narrows the list to calls that registered or verified that patient. |
 | `GET` | `/calls/{call_id}` | API key | One call by Retell's `call_id`, including the patients it created and whether verification passed. |
 | `GET` | `/logs` | API key | The event log, newest first, kept for 90 days. Filters: `since`, `until`, `level` (minimum), `event`, `hide_http`, `call_id`, `request_id`. |
 | `GET` | `/logs/events` | API key | Every event name that has been logged, for the event filter. |
-| `GET` | `/stats` | API key | The Overview page's counts: live calls, calls and new patients in the last 24 hours, average call length, possible duplicates, errors and warnings. |
+| `GET` | `/stats` | API key | The Overview page's counts: live calls, calls and new patients in the last 24 hours, average call length, Retell spend (24 hours and all time), possible duplicates, errors and warnings. |
 
 ## Voice agent tools (called by Retell mid-call)
 

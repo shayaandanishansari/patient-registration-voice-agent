@@ -94,3 +94,29 @@ async def test_counts_recent_problems(client, db):
     stats = await _stats(client)
     assert stats["errors_24h"] == 2
     assert stats["warnings_24h"] == 1
+
+
+def _cost(cents: float) -> dict:
+    return {"combined_cost": cents}
+
+
+async def test_sums_retell_spend(client, db):
+    await db.calls.insert_many(
+        [
+            {"call_id": "a", "started_at": _ago(hours=1), "call_cost": _cost(10.25)},
+            {"call_id": "b", "started_at": _ago(hours=5), "call_cost": _cost(20.5)},
+            {"call_id": "old", "started_at": _ago(days=3), "call_cost": _cost(100)},
+            # Cost not in yet (call_analyzed hasn't arrived).
+            {"call_id": "ongoing", "started_at": _ago(minutes=2)},
+        ]
+    )
+
+    stats = await _stats(client)
+    assert stats["spend_cents_24h"] == 30.75
+    assert stats["spend_cents_total"] == 130.75
+
+
+async def test_spend_is_zero_without_costs(client):
+    stats = await _stats(client)
+    assert stats["spend_cents_24h"] == 0
+    assert stats["spend_cents_total"] == 0

@@ -4,7 +4,7 @@
 // would pull in docs/CONFIDENTIAL and docs/archive).
 
 const MARKDOWN = import.meta.glob<string>(
-  "../../../../docs/{approach,design-decisions,api-routes,security}.md",
+  "../../../../docs/{approach,design-decisions,api-routes,costs,security}.md",
   { query: "?raw", import: "default", eager: true },
 );
 const FILES = import.meta.glob<string>(
@@ -95,6 +95,14 @@ const ENTRIES: Entry[] = [
     kind: "document",
     title: "API routes",
     description: "Every route the backend serves, grouped by who calls it, with the auth each one needs.",
+  },
+  {
+    slug: "costs",
+    file: "costs.md",
+    kind: "document",
+    title: "Costs",
+    description:
+      "What a call costs per minute and where the money goes (LLM, voice, telephony), the fixed costs, and where to see live spend.",
   },
   {
     slug: "security",

@@ -5,7 +5,14 @@ import { formatDateTime, formatDob, formatPhone } from "@/lib/format";
 
 import type { Patient } from "../types";
 
-export function PatientTable({ patients }: { patients: Patient[] }) {
+export function PatientTable({
+  patients,
+  duplicateIds,
+}: {
+  patients: Patient[];
+  /** Records that share name, DOB and phone with another one. */
+  duplicateIds?: Set<string>;
+}) {
   const navigate = useNavigate();
 
   return (
@@ -41,6 +48,11 @@ export function PatientTable({ patients }: { patients: Patient[] }) {
                 {p.deleted_at && (
                   <span className="ml-2">
                     <Badge tone="danger">Deleted</Badge>
+                  </span>
+                )}
+                {duplicateIds?.has(p.patient_id) && (
+                  <span className="ml-2">
+                    <Badge tone="warning">Possible duplicate</Badge>
                   </span>
                 )}
               </td>

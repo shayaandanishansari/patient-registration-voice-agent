@@ -42,3 +42,9 @@ export function formatAgo(iso: string | null | undefined, now: Date = new Date()
   if (minutes < 24 * 60) return `${Math.floor(minutes / 60)}h ago`;
   return formatDateTime(iso);
 }
+
+/** Retell reports costs in cents: 10.28 -> "$0.10". */
+export function formatCents(cents: number | null | undefined): string {
+  if (cents == null) return "—";
+  return `$${(cents / 100).toFixed(2)}`;
+}

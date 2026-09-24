@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { ErrorMessage } from "@/components/QueryState";
-import { formatDuration } from "@/lib/format";
+import { formatCents, formatDuration } from "@/lib/format";
 
 import { useStats } from "../api/queries";
 
@@ -16,7 +16,7 @@ function StatTile({
 }: {
   to: string;
   label: string;
-  value: number | undefined;
+  value: number | string | undefined;
   hint?: ReactNode;
   tone?: "neutral" | "danger";
   indicator?: ReactNode;
@@ -64,7 +64,7 @@ export function StatTiles() {
   return (
     <div className="space-y-3">
       {error && <ErrorMessage error={error} />}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <StatTile
           to="/calls"
           label="Live calls"
@@ -94,6 +94,12 @@ export function StatTiles() {
           label="Possible duplicates"
           value={stats?.possible_duplicates}
           hint={stats && "Same name, DOB & phone · merge in person"}
+        />
+        <StatTile
+          to="/calls"
+          label="Spend · last 24h"
+          value={stats && formatCents(stats.spend_cents_24h)}
+          hint={stats && `${formatCents(stats.spend_cents_total)} all time · Retell`}
         />
         <StatTile
           to={problems > 0 ? "/logs?last=24h&level=WARNING" : "/logs?last=24h"}

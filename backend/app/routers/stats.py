@@ -28,6 +28,19 @@ async def _avg_duration_ms(db: Database, since: datetime) -> int | None:
     return round(rows[0]["avg"]) if rows and rows[0]["avg"] is not None else None
 
 
+async def _spend_cents(db: Database, since: datetime | None = None) -> float:
+    match: dict = {"call_cost.combined_cost": {"$gt": 0}}
+    if since:
+        match["started_at"] = {"$gte": since}
+    rows = await db.calls.aggregate(
+        [
+            {"$match": match},
+            {"$group": {"_id": None, "total": {"$sum": "$call_cost.combined_cost"}}},
+        ]
+    ).to_list(length=1)
+    return round(rows[0]["total"], 2) if rows else 0.0
+
+
 @router.get("", response_model=Envelope[StatsOut])
 async def get_stats(db: DbDep) -> Envelope[StatsOut]:
     """Headline counts for the dashboard homepage."""
@@ -41,6 +54,8 @@ async def get_stats(db: DbDep) -> Envelope[StatsOut]:
         calls_total,
         patients_total,
         patients_24h,
+        spend_24h,
+        spend_total,
         errors_24h,
         warnings_24h,
         duplicate_groups,
@@ -53,6 +68,8 @@ async def get_stats(db: DbDep) -> Envelope[StatsOut]:
         db.calls.count_documents({}),
         db.patients.count_documents(ACTIVE),
         db.patients.count_documents({**ACTIVE, "created_at": {"$gte": day_ago}}),
+        _spend_cents(db, day_ago),
+        _spend_cents(db),
         db.logs.count_documents(
             {"ts": {"$gte": day_ago}, "level": {"$in": ["ERROR", "CRITICAL"]}}
         ),
@@ -70,6 +87,8 @@ async def get_stats(db: DbDep) -> Envelope[StatsOut]:
             patients_total=patients_total,
             patients_24h=patients_24h,
             possible_duplicates=len(duplicate_groups),
+            spend_cents_24h=spend_24h,
+            spend_cents_total=spend_total,
             errors_24h=errors_24h,
             warnings_24h=warnings_24h,
         )

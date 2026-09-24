@@ -87,3 +87,19 @@ async def test_webhook_ignores_unknown_event(client, db):
     assert response.status_code == 200
     call_doc = await db.calls.find_one({"call_id": "call-wh-4"})
     assert call_doc is None
+
+
+async def test_webhook_stores_call_cost(client, db):
+    cost = {
+        "combined_cost": 10.28,
+        "product_costs": [
+            {"product": "claude_5_sonnet", "cost": 3.52, "unit_price": 0.107}
+        ],
+    }
+    body = _webhook_body("call_analyzed", "call-wh-cost", call_cost=cost)
+    await post_signed(client, "/retell/webhook", body)
+    # A later event without the cost doesn't erase it.
+    await post_signed(client, "/retell/webhook", _webhook_body("call_ended", "call-wh-cost"))
+
+    call_doc = await db.calls.find_one({"call_id": "call-wh-cost"})
+    assert call_doc["call_cost"] == cost

@@ -14,6 +14,7 @@ as soon as it exists.
 |---|---|---|
 | `design-decisions.md` | The judgment calls: where the brief left a choice open or would have caused a problem (duplicates, verification, scheduling, Retell), what was chosen and what it costs. | Yes |
 | `api-routes.md` | Every backend route grouped by caller, with its auth. `backend/tests/test_api_routes_doc.py` keeps it in step with the app. | Yes |
+| `costs.md` | What a call costs per minute and per registration, the fixed costs, and where live spend shows up on the dashboard. | Yes |
 | `System Architecture.svg` | The system diagram: caller, Retell, backend, MongoDB, dashboard, and the routes and auth between them. `System Architecture.excalidraw` is its editable source. | Yes |
 | `identity-voiceagent.html` | Design research memo deciding what kind of phone line this agent is (pre-registration / patient access, not a general switchboard or nurse triage) and why. It drives the system prompt's scope, the identity-verification approach, the emergency rule, and why duplicates are never revealed to an unverified caller. | Yes |
 | `patient_field_spec.xlsx` | The patient data model field by field (type, validation rule, required), plus a Calls sheet. The backend's models and `$jsonSchema` validator follow it. | Yes |
