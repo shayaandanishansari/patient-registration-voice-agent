@@ -25,3 +25,12 @@ export function useLogEvents() {
     staleTime: 60_000,
   });
 }
+
+/** The newest records, without per-request noise (the homepage preview). */
+export function useRecentLogs(limit: number) {
+  return useQuery({
+    queryKey: ["logs", "recent", limit],
+    queryFn: () => getPage<LogEntry>("/logs", { hide_http: true, limit }),
+    refetchInterval: 15_000,
+  });
+}

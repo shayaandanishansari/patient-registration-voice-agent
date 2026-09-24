@@ -26,6 +26,7 @@ from app.routers import (
     patients,
     retell_tools,
     retell_webhook,
+    stats,
 )
 
 log = EventLogger("app")
@@ -111,6 +112,7 @@ def create_app() -> FastAPI:
     app.include_router(calls.router)
     app.include_router(appointments.router)
     app.include_router(logs.router)
+    app.include_router(stats.router)
     app.include_router(retell_tools.router)
     app.include_router(retell_webhook.probe_router)
     app.include_router(retell_webhook.router)

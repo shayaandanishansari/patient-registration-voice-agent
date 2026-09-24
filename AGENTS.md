@@ -103,7 +103,8 @@ dependencies installed. Layered layout:
   `calls.py` (per-call verification/registration state), `appointments.py` (mock slots,
   booking).
 - `app/routers/` — `patients.py` (CRUD), `calls.py`, `appointments.py`, `logs.py`
-  (read the `logs` collection by time range, level, event, call), `health.py`,
+  (read the `logs` collection by time range, level, event, call), `stats.py`
+  (headline counts for the dashboard homepage), `health.py`,
   `retell_tools.py` (7 tool endpoints under `/retell/tools/*`; the flow uses 4; its
   route class logs each call's args and response once),
   `retell_webhook.py` (idempotent upsert by `call_id`, logs the full body, never
@@ -120,8 +121,8 @@ dependencies installed. Layered layout:
 ## Dashboard (`dashboard/`)
 
 Vite + React + TS, TanStack Query, React Router, Tailwind. Feature folders (`patients`,
-`calls`, `appointments`, `logs`) that never import each other; cross-feature pages are composed
-in `src/app/routes.tsx`. API types are generated from the backend's OpenAPI
+`calls`, `appointments`, `logs`, `stats`) that never import each other; cross-feature pages
+(including the Overview homepage at `/`) are composed in `src/app/routes.tsx`. API types are generated from the backend's OpenAPI
 (`npm run gen:api`). TypeScript is pinned to 6.x because TS 7 lacks the compiler API
 `openapi-typescript` needs. See `dashboard/ARCHITECTURE.md`.
 

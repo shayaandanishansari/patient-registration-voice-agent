@@ -32,3 +32,13 @@ export function dash(value: string | null | undefined): string {
 export function optional(value: string | null | undefined): string {
   return value ? value : "Not provided";
 }
+
+/** "just now", "5m ago", "3h ago", then the date for anything older than a day. */
+export function formatAgo(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return "—";
+  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)}h ago`;
+  return formatDateTime(iso);
+}

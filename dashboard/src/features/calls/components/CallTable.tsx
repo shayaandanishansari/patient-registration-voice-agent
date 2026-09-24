@@ -5,7 +5,7 @@ import { dash, formatDateTime, formatDuration } from "@/lib/format";
 
 import type { Call } from "../types";
 
-function outcome(call: Call) {
+export function outcome(call: Call) {
   if (call.patients_created?.length) return <Badge tone="brand">Registered</Badge>;
   if (call.verified_patient_id) return <Badge tone="brand">Verified</Badge>;
   if (call.verification_attempts) return <Badge tone="warning">Verification failed</Badge>;

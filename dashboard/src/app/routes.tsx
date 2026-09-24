@@ -5,8 +5,41 @@ import { Link, useParams } from "react-router";
 import { Card } from "@/components/Card";
 import { ErrorMessage, Loading } from "@/components/QueryState";
 import { AppointmentList } from "@/features/appointments";
-import { CallDetail, CallList, useCall } from "@/features/calls";
-import { PatientProfile, usePatient } from "@/features/patients";
+import { CallDetail, CallList, RecentCalls, useCall } from "@/features/calls";
+import { RecentLogs } from "@/features/logs";
+import { PatientProfile, RecentPatients, usePatient } from "@/features/patients";
+import { StatTiles } from "@/features/stats";
+
+function ViewAll({ to }: { to: string }) {
+  return (
+    <Link to={to} className="text-xs font-medium text-brand-700 hover:underline">
+      View all →
+    </Link>
+  );
+}
+
+export function HomeRoute() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-slate-900">Overview</h1>
+        <p className="text-sm text-slate-500">What the voice agent is doing, at a glance.</p>
+      </div>
+      <StatTiles />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Recent calls" actions={<ViewAll to="/calls" />}>
+          <RecentCalls />
+        </Card>
+        <Card title="New patients" actions={<ViewAll to="/patients" />}>
+          <RecentPatients />
+        </Card>
+      </div>
+      <Card title="Recent activity" actions={<ViewAll to="/logs?hide_http=true" />}>
+        <RecentLogs />
+      </Card>
+    </div>
+  );
+}
 
 export function PatientRoute() {
   const { patientId = "" } = useParams();

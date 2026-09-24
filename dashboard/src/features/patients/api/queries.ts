@@ -24,3 +24,12 @@ export function usePatient(patientId: string) {
     queryFn: () => getOne<Patient>(`/patients/${patientId}`),
   });
 }
+
+/** The newest registrations (the homepage preview). */
+export function useRecentPatients(limit: number) {
+  return useQuery({
+    queryKey: ["patients", "recent", limit],
+    queryFn: () => getPage<Patient>("/patients", { limit }),
+    refetchInterval: 15_000,
+  });
+}

@@ -156,6 +156,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Stats
+         * @description Headline counts for the dashboard homepage.
+         */
+        get: operations["get_stats_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/retell/tools/check-existing-patient": {
         parameters: {
             query?: never;
@@ -391,6 +411,11 @@ export interface components {
         /** Envelope[PatientOut] */
         Envelope_PatientOut_: {
             data?: components["schemas"]["PatientOut"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+        };
+        /** Envelope[StatsOut] */
+        Envelope_StatsOut_: {
+            data?: components["schemas"]["StatsOut"] | null;
             error?: components["schemas"]["ApiError"] | null;
         };
         /** Envelope[list[str]] */
@@ -677,6 +702,42 @@ export interface components {
             };
         } & {
             [key: string]: unknown;
+        };
+        /** StatsOut */
+        StatsOut: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Live Calls
+             * @description Calls in progress: status ongoing and started within the last hour (Retell's default maximum call length), so a call whose call_ended webhook never arrived stops counting.
+             */
+            live_calls: number;
+            /** Calls 24H */
+            calls_24h: number;
+            /**
+             * Avg Call Duration Ms 24H
+             * @description Across ended calls started in the last 24h.
+             */
+            avg_call_duration_ms_24h?: number | null;
+            /** Calls Total */
+            calls_total: number;
+            /**
+             * Patients Total
+             * @description Active (not deleted) patients.
+             */
+            patients_total: number;
+            /** Patients 24H */
+            patients_24h: number;
+            /**
+             * Errors 24H
+             * @description ERROR and CRITICAL log records.
+             */
+            errors_24h: number;
+            /** Warnings 24H */
+            warnings_24h: number;
         };
         /** UpdateHistoryEntry */
         UpdateHistoryEntry: {
@@ -1104,6 +1165,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_list_str__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stats_stats_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StatsOut_"];
                 };
             };
             /** @description Validation Error */

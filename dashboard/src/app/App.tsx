@@ -8,7 +8,7 @@ import { clearApiKey, COOKIE_AUTH, ENV_API_KEY, getApiKey, setApiKey } from "@/l
 import { queryClient } from "@/lib/queryClient";
 
 import { Layout } from "./Layout";
-import { CallRoute, CallsRoute, PatientRoute } from "./routes";
+import { CallRoute, CallsRoute, HomeRoute, PatientRoute } from "./routes";
 import { SignIn } from "./SignIn";
 
 function createRouter(onSignOut?: () => void) {
@@ -16,13 +16,13 @@ function createRouter(onSignOut?: () => void) {
     {
       element: <Layout onSignOut={onSignOut} />,
       children: [
-        { index: true, element: <Navigate to="/patients" replace /> },
+        { index: true, element: <HomeRoute /> },
         { path: "patients", element: <PatientsPage /> },
         { path: "patients/:patientId", element: <PatientRoute /> },
         { path: "calls", element: <CallsRoute /> },
         { path: "calls/:callId", element: <CallRoute /> },
         { path: "logs", element: <LogsPage /> },
-        { path: "*", element: <Navigate to="/patients" replace /> },
+        { path: "*", element: <Navigate to="/" replace /> },
       ],
     },
     // "/dashboard/" in the build the backend serves, "/" standalone.

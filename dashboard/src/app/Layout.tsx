@@ -12,11 +12,14 @@ export function Layout({ onSignOut }: { onSignOut?: () => void }) {
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <span className="font-semibold text-slate-900">
               Hospital <span className="text-brand-600">Registrations</span>
             </span>
             <nav className="flex gap-1">
+              <NavLink to="/" end className={navLinkClass}>
+                Overview
+              </NavLink>
               <NavLink to="/patients" className={navLinkClass}>
                 Patients
               </NavLink>

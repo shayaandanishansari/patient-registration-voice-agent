@@ -20,3 +20,12 @@ export function useCall(callId: string) {
     queryFn: () => getOne<Call>(`/calls/${encodeURIComponent(callId)}`),
   });
 }
+
+/** The newest calls, refreshed in the background (the homepage preview). */
+export function useRecentCalls(limit: number) {
+  return useQuery({
+    queryKey: ["calls", "recent", limit],
+    queryFn: () => getPage<Call>("/calls", { limit }),
+    refetchInterval: 15_000,
+  });
+}
