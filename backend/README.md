@@ -146,7 +146,7 @@ and links to patients (`patients_created`, `verified_patient_id`).
 
 ## REST API
 
-All endpoints except `/health` need an `X-API-Key` header. Every response
+All endpoints below except `/health` need an `X-API-Key` header. Every JSON response
 uses the same envelope:
 
 ```json
@@ -165,8 +165,19 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 | PUT | `/patients/{patient_id}` | Partial update: only the fields sent change. `null` clears an optional field. Required fields can't be cleared. |
 | DELETE | `/patients/{patient_id}` | Soft delete: sets `deleted_at` and returns the record |
 | GET | `/calls`, `/calls/{call_id}` | `?patient_id=` lists the calls that registered or verified a patient |
+| GET | `/logs` | Log records, newest first (kept 90 days). Filters: `?since=`, `?until=` (ISO datetimes), `?level=` (minimum level), `?event=`, `?hide_http=true`, `?call_id=`, `?request_id=` |
+| GET | `/logs/events` | Every event name logged so far, for filtering |
+| GET | `/stats` | Headline counts for the dashboard: live calls, calls and new patients in the last 24h, average call duration, totals, errors and warnings |
 | GET | `/health` | No auth. Checks the database connection. |
+| GET | `/docs`, `/redoc`, `/openapi.json` | API docs. The browser asks for a login (any username, the API key as password); `/openapi.json` also takes the header. |
 | GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Needs the key: the browser asks for a login (any username, the API key as password), then a session cookie covers the dashboard's API calls. |
+
+The Retell routes aren't part of this API: `POST /retell/tools/*` (the four
+tools in the Architecture diagram, plus `check-existing-patient`) and
+`POST /retell/webhook` need Retell's
+`X-Retell-Signature` instead of the key. `GET /retell/webhook` is an open
+reachability check. For the live list with request and response schemas, open
+`/docs`.
 
 Status codes: `200` OK, `201` created, `400` malformed request (bad JSON,
 bad query parameter, bad cursor, non-UUID ID, empty update), `401` missing
