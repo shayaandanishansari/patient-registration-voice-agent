@@ -1,4 +1,4 @@
-# CareCloud VoiceAgent — patient registration by phone
+# Hospital VoiceAgent - patient registration by phone
 
 Call a real U.S. number and talk to **Sarah**, a voice AI intake coordinator.
 She registers you as a new patient through natural conversation, reads
@@ -8,13 +8,13 @@ Every record is also available through a REST API and a small web dashboard.
 
 ## Live demo
 
-| | |
-|---|---|
-| **Phone number** | `TODO: add the Retell number` |
-| **API base URL** | https://patient-registration-voice-agent-production-f401.up.railway.app |
-| **API docs** | [`/docs`](https://patient-registration-voice-agent-production-f401.up.railway.app/docs) (OpenAPI) |
+| |                                                                                                                             |
+|---|-----------------------------------------------------------------------------------------------------------------------------|
+| **Phone number** | `+1-412-223-8469`                                                                                                           |
+| **API base URL** | https://patient-registration-voice-agent-production-f401.up.railway.app                                                     |
+| **API docs** | [`/docs`](https://patient-registration-voice-agent-production-f401.up.railway.app/docs) (OpenAPI)                           |
 | **Dashboard** | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): sign in with the API key |
-| **API key** | Sent separately. Pass it as the `X-API-Key` header. `/health` needs none. |
+| **API key** | Sent separately. Pass it as the `X-API-Key` header. `/health` needs none.                                                   |
 
 Things to try on a call:
 - **Register:** answer in any order, correct yourself ("actually it's
@@ -63,7 +63,7 @@ Phone call ⇄ Retell AI (telephony + STT/TTS + GPT-4.1 conversation flow)
 
 | Path | |
 |---|---|
-| [`backend/`](backend/README.md) | FastAPI service, tests, and the Retell agent export (`assets/retell_agent_scripts/agent_import.json`, which contains the full system prompt and conversation flow) |
+| [`backend/`](backend/README.md) | FastAPI service, tests, and the Retell agent export (`assets/retell_agent_scripts/agent.json`, which contains the full system prompt and conversation flow) |
 | [`dashboard/`](dashboard/README.md) | Web UI over the API. Its production build is committed to `backend/assets/dashboard/` and served at `/dashboard` |
 | [`docs/`](docs/README.md) | Field spec and the design memo on what kind of phone line this is |
 | `playground/` | Early experiments (DB connection, Retell API) kept as a record of the testing approach |

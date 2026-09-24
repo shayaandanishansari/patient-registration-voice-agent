@@ -21,7 +21,7 @@ To go live:
 1. Deploy the backend. On startup it migrates records written by the first version
    (`app/core/migrations.py`, idempotent), creates indexes, and attaches the patients
    `$jsonSchema` validator (needs Atlas `dbAdmin`; it logs a warning otherwise).
-2. Re-import `backend/assets/retell_agent_scripts/agent_import.json` into Retell. Its tool
+2. Re-import `backend/assets/retell_agent_scripts/agent.json` into Retell. Its tool
    URLs already point at the Railway URL. The agent language is `["en-US", "es-419"]`.
    There is no upload script; import it through the Retell dashboard.
 3. On Railway: `ALLOW_UNSIGNED_REQUESTS=false`, `RETELL_API_KEY` set, and `API_KEY` set
@@ -30,7 +30,7 @@ To go live:
 
 Stack decisions: MongoDB Atlas via Motor (async), verified in `playground/db_connection/`.
 Retell AI is the voice/telephony + LLM layer. The agent (global prompt, nodes, tools) lives
-in `backend/assets/retell_agent_scripts/agent_import.json`, a Retell agent export and the
+in `backend/assets/retell_agent_scripts/agent.json`, a Retell agent export and the
 source of truth for the flow. `playground/retell_api/` keeps the earlier versions.
 `tests/test_flow_contract.py` checks that the flow's tool URLs, argument names, response
 variables and equation-edge values match the backend. Run it after editing either side,
@@ -90,7 +90,7 @@ dependencies installed. Layered layout:
   `retell_tools.py` (7 tool endpoints under `/retell/tools/*`), `retell_webhook.py`
   (idempotent upsert by `call_id`, logs transcript/summary, never touches verification
   state; tolerates Retell's connectivity-test GET/empty POST).
-- `assets/retell_agent_scripts/agent_import.json` — the Retell agent.
+- `assets/retell_agent_scripts/agent.json` — the Retell agent.
 - `tests/` — `mongomock-motor`-backed, no real DB. Run `python -m pytest -q` from
   `backend/`.
 

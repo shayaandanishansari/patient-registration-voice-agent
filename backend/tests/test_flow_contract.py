@@ -13,8 +13,8 @@ from app.core.validation import SEX_VALUES
 from app.models.patients import PATIENT_FIELDS, REQUIRED_FIELDS
 from app.services.patients import LEGACY_ARG_NAMES, VOICE_UPDATABLE_FIELDS
 
-FLOW_PATH = Path(__file__).resolve().parent.parent / "assets" / "retell_agent_scripts" / "agent_import.json"
-FLOW = json.loads(FLOW_PATH.read_text(encoding="utf-8"))["conversation_flow"]
+FLOW_PATH = Path(__file__).resolve().parent.parent / "assets" / "retell_agent_scripts" / "agent.json"
+FLOW = json.loads(FLOW_PATH.read_text(encoding="utf-8"))["conversationFlow"]
 TOOLS = {t["name"]: t for t in FLOW["tools"]}
 
 

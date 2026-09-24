@@ -14,7 +14,7 @@ caller (phone)
    v
 Retell AI  -- telephony, speech-to-text, text-to-speech, and the LLM (GPT-4.1)
    |          running the conversation flow in
-   |          assets/retell_agent_scripts/agent_import.json
+   |          assets/retell_agent_scripts/agent.json
    |
    +--> POST /retell/tools/check-existing-patient  }
    +--> POST /retell/tools/create-patient          }  tool calls made
@@ -145,7 +145,7 @@ Interactive docs: `$BASE/docs`.
 
 ## The voice agent
 
-The full agent is `assets/retell_agent_scripts/agent_import.json`. It's a
+The full agent is `assets/retell_agent_scripts/agent.json`. It's a
 Retell agent export that you can import in the Retell dashboard. Its
 `global_prompt` is the system message, and each node's `instruction` is
 that step's prompt.
@@ -261,7 +261,7 @@ python -m pytest -q    # mongomock-motor, no real database needed
    startup the app upgrades any records from the first backend version
    (`core/migrations.py`, idempotent), creates indexes, and attaches the
    schema validator.
-3. **Retell**: import `assets/retell_agent_scripts/agent_import.json` (its
+3. **Retell**: import `assets/retell_agent_scripts/agent.json` (its
    tool URLs already point at the Railway deployment). Set the agent's
    webhook URL to `<base>/retell/webhook` and assign the phone number.
 
