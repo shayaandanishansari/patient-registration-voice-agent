@@ -155,17 +155,23 @@ def normalize_sex(value: str) -> str:
 
 def normalize_phone(value: str, field_label: str = "phone number") -> str:
     """Returns the 10-digit U.S. number, digits only (e.g. "5125550123")."""
-    message = f"That {field_label} doesn't look valid. It needs to be a 10 digit U.S. number."
+    wrong_length = f"That {field_label} doesn't look valid. It needs to be a 10 digit U.S. number."
+    # Ten digits that aren't a real number (123 456 7890, 555 555 5555) get
+    # their own message, so the caller isn't told to give ten digits again.
+    not_real = f"That {field_label} isn't a real U.S. number. Could you check it and say it again?"
     try:
         parsed = phonenumbers.parse(value or "", "US")
     except phonenumbers.NumberParseException as exc:
-        raise ValidationError(message) from exc
-    if parsed.country_code != 1 or not phonenumbers.is_valid_number(parsed):
-        raise ValidationError(message)
-    national = str(parsed.national_number)
-    if len(national) != 10:
-        raise ValidationError(message)
-    return national
+        raise ValidationError(wrong_length) from exc
+    # Counted from the input: national_number is an int, so it drops leading zeros.
+    digits = re.sub(r"\D", "", value)
+    if len(digits) == 11 and digits.startswith("1"):
+        digits = digits[1:]
+    if parsed.country_code != 1 or len(digits) != 10:
+        raise ValidationError(wrong_length)
+    if not phonenumbers.is_valid_number(parsed):
+        raise ValidationError(not_real)
+    return str(parsed.national_number)
 
 
 def normalize_state(value: str) -> str:

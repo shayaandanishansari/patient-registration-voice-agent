@@ -120,12 +120,22 @@ class TestPhone:
             normalize_phone("+44 20 7946 0958")
 
     def test_rejects_too_short(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="10 digit"):
             normalize_phone("12345")
+
+    def test_rejects_too_long(self):
+        with pytest.raises(ValidationError, match="10 digit"):
+            normalize_phone("21255501234")
 
     def test_rejects_invalid_number(self):
         with pytest.raises(ValidationError):
             normalize_phone("0000000000")
+
+    @pytest.mark.parametrize("fake", ["1234567890", "5555555555", "0001234567"])
+    def test_ten_digit_fake_number_is_not_told_about_digits(self, fake):
+        with pytest.raises(ValidationError, match="isn't a real U.S. number") as exc:
+            normalize_phone(fake)
+        assert "10 digit" not in str(exc.value)
 
 
 class TestState:

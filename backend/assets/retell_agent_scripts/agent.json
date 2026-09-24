@@ -27,7 +27,7 @@
     "enable_update": false,
     "enable_read": true
   },
-  "opt_in_signed_url": false,
+  "opt_in_signed_url": true,
   "version": 0,
   "assigned_tags": [],
   "is_published": false,
@@ -606,6 +606,7 @@
         "max_retry": 1,
         "timeout_ms": 10000,
         "speak_after_execution": true,
+        "enable_typing_sound": true,
         "args_at_root": false,
         "name": "get_patient_profile",
         "tool_id": "tool_get_patient",
