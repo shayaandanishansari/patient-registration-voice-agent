@@ -18,7 +18,7 @@ See the root `README.md` (Bonus challenges) for the reviewer-facing summary.
 
 Backend, agent flow and dashboard are built, and the backend is deployed on Railway at
 `https://patient-registration-voice-agent-production-f401.up.railway.app` (auto-deploys
-from `main`). The remaining steps before submitting are in the root `TODO.md`.
+from `main`).
 
 - **Railway variables** come from `backend/.env.production` (gitignored), pasted into the
   service's Raw Editor. Never paste the local `backend/.env` (development values). Needed:
@@ -80,7 +80,6 @@ ID. `member_id` (8 random digits) is the voice-facing ID the caller reads back t
 | `backend/` | FastAPI backend + Retell agent export | Yes |
 | `dashboard/` | Vite/React dashboard over the REST API | Yes |
 | `playground/` | Experiments kept as a showcase of testing patterns | Yes |
-| `TODO.md` | Remaining steps before submitting, in order | Yes |
 | `.idea/` | PyCharm config — Python 3.14, Black | No |
 
 ## Backend (`backend/`)

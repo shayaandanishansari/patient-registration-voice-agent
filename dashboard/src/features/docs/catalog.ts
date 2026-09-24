@@ -4,7 +4,7 @@
 // would pull in docs/CONFIDENTIAL and docs/archive).
 
 const MARKDOWN = import.meta.glob<string>(
-  "../../../../docs/{approach,design-decisions,api-routes,costs,security}.md",
+  "../../../../docs/{design-decisions,api-routes,costs,security}.md",
   { query: "?raw", import: "default", eager: true },
 );
 const FILES = import.meta.glob<string>(
@@ -65,13 +65,6 @@ export function thumbnailFor(slug: string): string | undefined {
 
 // Display order. An entry whose file doesn't exist yet is left out.
 const ENTRIES: Entry[] = [
-  {
-    slug: "approach",
-    file: "approach.md",
-    kind: "document",
-    title: "My approach",
-    description: "How I went about building this, in my own words.",
-  },
   {
     slug: "design-decisions",
     file: "design-decisions.md",

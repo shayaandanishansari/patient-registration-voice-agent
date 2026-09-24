@@ -1,15 +1,15 @@
 # docs
 
 Design notes and reference material for the Hospital VoiceAgent take-home. Everything here
-is tracked in git except `CONFIDENTIAL/` (the assessment brief itself). The reviewer-facing
+is tracked in git except `CONFIDENTIAL/` (the assessment brief itself) and `archive/`
+(old drafts). The reviewer-facing
 overview is the root `README.md`; the backend write-up is `backend/README.md`.
 
 The dashboard's Docs page (`/dashboard/docs`) shows these as cards, along with a readable
 view of the Retell agent's prompt and flow. It bundles the files at build time; the list
 is in `dashboard/src/features/docs/catalog.ts`. After editing a doc, refresh the card
 screenshots (`npm run thumbnails` in `dashboard/`) and rebuild the served dashboard
-(`npm run build:backend`). A `docs/approach.md` shows up there
-as soon as it exists.
+(`npm run build:backend`).
 
 | File | What it is | Tracked? |
 |---|---|---|

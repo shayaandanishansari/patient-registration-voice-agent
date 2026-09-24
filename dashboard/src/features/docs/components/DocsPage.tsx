@@ -72,9 +72,9 @@ export function DocsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Docs</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Design docs</h1>
         <p className="text-sm text-slate-500">
-          How the system was designed and why, written alongside the code.
+          Why the system is built the way it is, and what another engineer needs to take it over.
         </p>
       </div>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
