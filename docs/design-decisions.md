@@ -82,8 +82,8 @@ server, or a voice platform (Vapi, Retell, Bland).
 
 **Choice.** Retell AI, running a node-based conversation flow on Claude Sonnet 5.
 
-**Why.** The reviewer grades one live call, and the brief's time limit is 3 hours. A
-hand-built bridge adds risk in the audio transport, which isn't what's being evaluated.
+**Why.** The reviewer grades one live call. A hand-built bridge adds risk in the audio
+transport, which isn't what's being evaluated.
 Retell gives a real number, low-latency speech and a flow editor. That leaves the time
 for the prompt, the tools and the backend. Sonnet 5 is used for its instruction-following
 on the security and read-back rules.

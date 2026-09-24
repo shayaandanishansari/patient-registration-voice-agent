@@ -61,7 +61,7 @@ phone line this is. Briefly:
 
 Other docs: `docs/design-decisions.md` (the judgment calls, and where the build departs from
 the brief), `docs/api-routes.md` (every route with its auth, kept in step with the app by
-`tests/test_api_routes_doc.py`, so update it when you add or change a route), and
+`tests/test_api_routes_doc.py`, so update it when you add or change a route),
 `docs/System Architecture.svg` (from the `.excalidraw` next to it), and `docs/agent-flow.html`
 (drawn from `agent.json`: after editing the agent, run `python scripts/render_agent_flow.py`
 from `backend/`; `tests/test_agent_flow_doc.py` fails until you do). `docs/archive/` is

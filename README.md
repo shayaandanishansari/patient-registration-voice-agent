@@ -6,6 +6,8 @@ everything back for confirmation, saves it, and gives you a member ID. Call
 back later and she can verify you and update your details.
 Every record is also available through a REST API and a small web dashboard.
 
+![System architecture](docs/System%20Architecture.svg)
+
 ## Live demo
 
 | |                                                                                                                             |
@@ -49,16 +51,7 @@ curl "$BASE/logs?since=2026-09-24T00:00:00Z&hide_http=true" -H "x-api-key: $KEY"
 
 ## Architecture
 
-```
-Phone call ⇄ Retell AI (telephony + STT/TTS + Claude Sonnet 5 conversation flow)
-                 │  signed tool calls & webhooks
-                 ▼
-           FastAPI backend ── routers / services / models / core
-                 │                     ▲
-                 ▼                     │ REST API (API key)
-           MongoDB Atlas ◀─────────────┤
-                                       └── React dashboard
-```
+The diagram at the top shows how the pieces connect. Why each one was chosen:
 
 | Layer | Choice | Why |
 |---|---|---|
@@ -125,7 +118,7 @@ in [`docs/security.md`](docs/security.md).
 | **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. Names in any script register and verify: José, Zoë, Nguyễn, Müller, or अनिल (see [Names](#names-in-any-language) below). |
 | **Call recording / transcript** | Done | Retell's webhook stores the transcript, recording URL and call analysis (summary) on a `calls` document linked to the patient it registered or verified. Visible in `GET /calls` and the dashboard. |
 | **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients (including possible duplicates), calls with transcripts, logs, and the design docs. |
-| **Automated tests** | Done | 162 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
+| **Automated tests** | Done | 170 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
 
 ### Duplicates: detected, never revealed
 

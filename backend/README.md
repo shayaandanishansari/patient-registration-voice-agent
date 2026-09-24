@@ -40,7 +40,7 @@ REST API: /patients (CRUD), /calls, /logs, /stats, /health
 
 **Stack.**
 - *Retell AI* — gives us a real phone number, low-latency speech, and a
-  node-based conversation flow in one platform. That lets the 3 hours go into
+  node-based conversation flow in one platform. That lets the effort go into
   the prompt, the tools and the backend, not into audio plumbing.
 - *Claude Sonnet 5 (through Retell)* — strong instruction-following and tool
   calling at conversational latency, which matters for the spelling,
