@@ -38,7 +38,7 @@ export function SignIn({ onSignIn }: { onSignIn: (key: string) => void }) {
         className="w-full max-w-sm space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
       >
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">CareCloud Registrations</h1>
+          <h1 className="text-lg font-semibold text-slate-900">Hospital Registrations</h1>
           <p className="mt-1 text-sm text-slate-500">
             Enter the backend's <code>API_KEY</code> to view patient records.
           </p>

@@ -2,7 +2,7 @@
   "agent_id": "",
   "channel": "voice",
   "last_modification_timestamp": 1790206532803,
-  "agent_name": "CareCloud Patient Registration Agent",
+  "agent_name": "Patient Registration Agent",
   "response_engine": {
     "type": "conversation-flow",
     "conversation_flow_id": "conversation_flow_2e02ab8e3a56",

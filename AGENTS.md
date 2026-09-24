@@ -4,7 +4,7 @@ Notes for any agent (human or AI) picking up this repo.
 
 ## What this is
 
-A take-home coding challenge from CareCloud: build a voice AI agent for patient
+A take-home coding challenge: build a voice AI agent for patient
 pre-registration. The brief (`docs/CONFIDENTIAL/`, gitignored — candidate-only material)
 specifies a registration flow, a patient data model, a REST API (full CRUD on `/patients`
 with a `{data, error}` envelope and soft delete), and bonuses (duplicate detection,
@@ -36,7 +36,7 @@ source of truth for the flow. `playground/retell_api/` keeps the earlier version
 variables and equation-edge values match the backend. Run it after editing either side,
 because a mismatch fails silently on a live call (the flow just takes its else-edge).
 
-`docs/identity-carecloud-voiceagent.html` is a research memo that settles what kind of
+`docs/identity-voiceagent.html` is a research memo that settles what kind of
 phone line this is. Briefly:
 
 - **A pre-registration and patient access line**: an intake coordinator, not a hospital

@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 
 from pydantic import AliasChoices, Field
@@ -22,6 +23,11 @@ class Settings(BaseSettings):
         default="", validation_alias=AliasChoices("API_KEY", "API_READ_KEY")
     )
     allow_unsigned_requests: bool = False
+
+    @property
+    def is_deployed(self) -> bool:
+        # Railway sets RAILWAY_ENVIRONMENT_NAME on every deployment.
+        return self.environment == "production" or "RAILWAY_ENVIRONMENT_NAME" in os.environ
 
 
 @lru_cache

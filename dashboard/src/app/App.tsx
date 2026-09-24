@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
 import { PatientsPage } from "@/features/patients";
-import { clearApiKey, ENV_API_KEY, getApiKey, setApiKey } from "@/lib/apiKey";
+import { clearApiKey, COOKIE_AUTH, ENV_API_KEY, getApiKey, setApiKey } from "@/lib/apiKey";
 import { queryClient } from "@/lib/queryClient";
 
 import { Layout } from "./Layout";
@@ -28,11 +28,12 @@ function createRouter(onSignOut?: () => void) {
 }
 
 export function App() {
-  const [signedIn, setSignedIn] = useState(() => Boolean(getApiKey()));
+  const [signedIn, setSignedIn] = useState(() => COOKIE_AUTH || Boolean(getApiKey()));
   const [router] = useState(() =>
-    // With a key from .env.local there's nothing to sign out of.
+    // With a key from .env.local, or the backend's login (which the browser
+    // keeps until it closes), there's nothing to sign out of.
     createRouter(
-      ENV_API_KEY
+      COOKIE_AUTH || ENV_API_KEY
         ? undefined
         : () => {
             clearApiKey();

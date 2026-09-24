@@ -1,9 +1,9 @@
-# CareCloud VoiceAgent — backend
+# Hospital VoiceAgent — backend
 
 FastAPI service behind the Retell AI voice agent. It registers new patients,
 verifies and updates existing ones, books a first appointment, and exposes a
 REST API over the same data. See `../README.md` for the live demo details and
-`../docs/identity-carecloud-voiceagent.html` for the design rationale (what
+`../docs/identity-voiceagent.html` for the design rationale (what
 kind of phone line this is, and why verification works the way it does).
 
 ## Architecture
@@ -118,7 +118,7 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 | GET | `/calls`, `/calls/{call_id}` | `?patient_id=` lists the calls that registered or verified a patient |
 | GET | `/appointments` | `?patient_id=` |
 | GET | `/health` | No auth. Checks the database connection. |
-| GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). The page is public; the data it loads needs the key. |
+| GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Needs the key: the browser asks for a login (any username, the API key as password), then a session cookie covers the dashboard's API calls. |
 
 Status codes: `200` OK, `201` created, `400` malformed request (bad JSON,
 bad query parameter, bad cursor, non-UUID ID, empty update), `401` missing
@@ -141,7 +141,8 @@ curl -X PUT "$BASE/patients/<patient_id>" -H "x-api-key: $KEY" -H "content-type:
 curl -X DELETE "$BASE/patients/<patient_id>" -H "x-api-key: $KEY"
 ```
 
-Interactive docs: `$BASE/docs`.
+Interactive docs: `$BASE/docs`. The browser asks for a login: any username, the API key as
+password. `/openapi.json` also takes the `X-API-Key` header.
 
 ## The voice agent
 

@@ -12,9 +12,9 @@ Every record is also available through a REST API and a small web dashboard.
 |---|-----------------------------------------------------------------------------------------------------------------------------|
 | **Phone number** | `+1-412-223-8469`                                                                                                           |
 | **API base URL** | https://patient-registration-voice-agent-production-f401.up.railway.app                                                     |
-| **API docs** | [`/docs`](https://patient-registration-voice-agent-production-f401.up.railway.app/docs) (OpenAPI)                           |
-| **Dashboard** | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): sign in with the API key |
-| **API key** | Sent separately. Pass it as the `X-API-Key` header. `/health` needs none.                                                   |
+| **API docs** | [`/docs`](https://patient-registration-voice-agent-production-f401.up.railway.app/docs) (OpenAPI): the browser asks for a login; any username, the API key as password |
+| **Dashboard** | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): the browser asks for a login; any username, the API key as password |
+| **API key** | Sent separately. Pass it as the `X-API-Key` header. Only `/health` needs none.                |
 
 Things to try on a call:
 - **Register:** answer in any order, correct yourself ("actually it's

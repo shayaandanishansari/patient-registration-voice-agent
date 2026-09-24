@@ -14,7 +14,7 @@ export function Layout({ onSignOut }: { onSignOut?: () => void }) {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-6">
             <span className="font-semibold text-slate-900">
-              CareCloud <span className="text-brand-600">Registrations</span>
+              Hospital <span className="text-brand-600">Registrations</span>
             </span>
             <nav className="flex gap-1">
               <NavLink to="/patients" className={navLinkClass}>

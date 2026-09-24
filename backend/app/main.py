@@ -19,6 +19,7 @@ from app.routers import (
     appointments,
     calls,
     dashboard,
+    docs,
     health,
     patients,
     retell_tools,
@@ -36,11 +37,21 @@ async def lifespan(app: FastAPI):
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
 
+    if settings.allow_unsigned_requests and settings.is_deployed:
+        raise RuntimeError(
+            "ALLOW_UNSIGNED_REQUESTS is true on a deployed environment. Refusing to "
+            "start with Retell signature verification disabled."
+        )
     if settings.allow_unsigned_requests:
         logger.warning(
             "ALLOW_UNSIGNED_REQUESTS is true — Retell signature verification is "
             "DISABLED. This must never be true outside local development."
         )
+
+    if not settings.retell_api_key:
+        logger.warning("RETELL_API_KEY is unset: every /retell/* request will be rejected.")
+    if not settings.api_key:
+        logger.warning("API_KEY is unset: every REST API request will be rejected.")
 
     db = connect(settings)
     await migrate_legacy_records(db)
@@ -56,12 +67,16 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
-        title="CareCloud VoiceAgent",
+        title="Hospital VoiceAgent",
         description=(
-            "Patient registration API behind the CareCloud voice agent. "
+            "Patient registration API behind the voice agent. "
             "Every response uses the envelope {\"data\": ..., \"error\": null}."
         ),
         lifespan=lifespan,
+        # Served by routers/docs.py instead, behind the API key.
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
     )
 
     app.add_middleware(
@@ -76,6 +91,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(Exception, unhandled_exception_handler)
 
     app.include_router(health.router)
+    app.include_router(docs.router)
     app.include_router(patients.router)
     app.include_router(calls.router)
     app.include_router(appointments.router)

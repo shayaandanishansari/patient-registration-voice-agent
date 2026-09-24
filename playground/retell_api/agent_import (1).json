@@ -1,5 +1,5 @@
 {
-  "agent_name": "CareCloud Patient Registration",
+  "agent_name": "Patient Registration",
   "language": "en-US",
   "conversation_flow": {
     "start_speaker": "agent",

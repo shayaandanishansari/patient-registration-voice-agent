@@ -1,0 +1,8 @@
+# Read by openapi-typescript (npm run gen:api). The backend's /openapi.json
+# needs the API key, taken from the API_KEY environment variable.
+resolve:
+  http:
+    headers:
+      - matches: https://patient-registration-voice-agent-production-f401.up.railway.app/**
+        name: X-API-Key
+        envVariable: API_KEY

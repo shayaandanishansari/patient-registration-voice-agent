@@ -3,7 +3,12 @@
 //   Anything VITE_* ends up in the built bundle, so never set it on a public deploy.
 // - Otherwise the key is typed in at sign-in and kept only in this tab's
 //   sessionStorage.
-const STORAGE_KEY = "carecloud.apiKey";
+// The embedded build (served by the backend at /dashboard/) needs neither: the
+// backend asks for the key before serving the page and sets a session cookie
+// that same-origin API calls carry.
+const STORAGE_KEY = "registration.apiKey";
+
+export const COOKIE_AUTH = import.meta.env.MODE === "embedded";
 
 export const ENV_API_KEY: string | undefined = import.meta.env.VITE_API_KEY || undefined;
 

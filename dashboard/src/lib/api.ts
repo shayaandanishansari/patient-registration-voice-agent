@@ -1,6 +1,6 @@
 import type { components } from "@/types/api";
 
-import { getApiKey } from "./apiKey";
+import { COOKIE_AUTH, getApiKey } from "./apiKey";
 
 const RAILWAY_URL = "https://patient-registration-voice-agent-production-f401.up.railway.app";
 
@@ -41,7 +41,7 @@ function buildUrl(path: string, params?: Params): string {
 // thrown ApiError.
 async function request<T>(path: string, params?: Params): Promise<{ data: T; meta?: ListMeta }> {
   const response = await fetch(buildUrl(path, params), {
-    headers: { "x-api-key": getApiKey() ?? "" },
+    headers: COOKIE_AUTH ? {} : { "x-api-key": getApiKey() ?? "" },
   });
   const body = (await response.json().catch(() => null)) as {
     data: T;

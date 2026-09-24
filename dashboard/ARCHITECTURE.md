@@ -55,6 +55,9 @@ backend's API models.
 
 ## Auth
 
-The REST API needs `X-API-Key`. The key is entered on a sign-in screen,
-checked against the API, and kept only in the tab's `sessionStorage`. It is
-never baked into the bundle, where anyone could read it.
+The REST API needs `X-API-Key`. Standalone (`npm run dev`), the key is
+entered on a sign-in screen, checked against the API, and kept only in the
+tab's `sessionStorage`. The embedded build the backend serves skips that
+screen: the backend asks for the key before serving the page and sets an
+HttpOnly session cookie, which same-origin API calls carry instead of the
+header. Either way the key is never baked into the bundle.
