@@ -179,6 +179,15 @@ tools in the Architecture diagram, plus `check-existing-patient`) and
 reachability check. For the live list with request and response schemas, open
 `/docs`.
 
+To print every route the app registers, including the ones hidden from
+`/docs` (the docs pages and the dashboard), run this from `backend/`. It
+doesn't connect to the database, but settings need `MONGODB_URI` set (your
+`.env`, or any placeholder):
+
+```bash
+python -c "from app.main import create_app; [print(*sorted(r.methods - {'HEAD'}), r.path) for r in create_app().routes if hasattr(r, 'methods')]"
+```
+
 Status codes: `200` OK, `201` created, `400` malformed request (bad JSON,
 bad query parameter, bad cursor, non-UUID ID, empty update), `401` missing
 or invalid key, `404` not found, `409` duplicate, `422` field validation
