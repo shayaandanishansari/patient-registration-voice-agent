@@ -7,8 +7,6 @@ collected payload.
 """
 
 import hashlib
-import json
-import logging
 import secrets
 import uuid
 from datetime import datetime, timezone
@@ -19,6 +17,7 @@ from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
 from app.core.database import Database
+from app.core.logger import EventLogger
 from app.models.patients import (
     DEFAULT_LANGUAGE,
     PATIENT_FIELDS,
@@ -29,7 +28,7 @@ from app.models.patients import (
 )
 from app.core.validation import ValidationError, normalize_member_id, parse_date_of_birth
 
-logger = logging.getLogger("app.services.patients")
+log = EventLogger("app.services.patients")
 
 UTC = timezone.utc
 MEMBER_ID_LENGTH = 8
@@ -98,15 +97,17 @@ def _idempotency_key(call_id: str, first_name: str, last_name: str, dob: str) ->
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def _log_payload(event: str, patient_id: str, source: str, payload: dict[str, Any]) -> None:
+def _log_payload(
+    event: str,
+    patient_id: str,
+    source: str,
+    call_id: str | None,
+    payload: dict[str, Any],
+) -> None:
     # The brief asks for the final collected payload in the logs. Test data
     # only — a production system would redact PHI here.
-    logger.info(
-        "%s patient_id=%s source=%s payload=%s",
-        event,
-        patient_id,
-        source,
-        json.dumps(payload, default=str, sort_keys=True),
+    log.info(
+        event, patient_id=patient_id, source=source, call_id=call_id, payload=payload
     )
 
 
@@ -156,10 +157,22 @@ async def insert_patient(
     if idempotency_key:
         existing = await db.patients.find_one({"create_idempotency_key": idempotency_key})
         if existing:
+            log.info(
+                "patient_create_replayed",
+                patient_id=existing["patient_id"],
+                source=source,
+                call_id=call_id,
+            )
             return existing
 
     duplicate = await find_duplicate(db, data)
     if duplicate:
+        log.info(
+            "patient_duplicate_detected",
+            existing_patient_id=duplicate.get("patient_id"),
+            source=source,
+            call_id=call_id,
+        )
         raise DuplicatePatient(duplicate)
 
     now = _now()
@@ -191,7 +204,7 @@ async def insert_patient(
             if existing:
                 return existing
             raise
-        _log_payload("patient_created", doc["patient_id"], source, data)
+        _log_payload("patient_created", doc["patient_id"], source, call_id, data)
         return doc
 
     raise RuntimeError("Could not allocate a unique member_id after several attempts.")
@@ -232,7 +245,7 @@ async def apply_update(
         return_document=ReturnDocument.AFTER,
     )
     if updated:
-        _log_payload("patient_updated", patient_id, source, changes)
+        _log_payload("patient_updated", patient_id, source, call_id, changes)
     return updated
 
 
@@ -267,7 +280,7 @@ async def soft_delete_patient(db: Database, patient_id: str) -> dict[str, Any] |
         return_document=ReturnDocument.AFTER,
     )
     if deleted:
-        logger.info("patient_deleted patient_id=%s", patient_id)
+        log.info("patient_deleted", patient_id=patient_id)
     return deleted
 
 

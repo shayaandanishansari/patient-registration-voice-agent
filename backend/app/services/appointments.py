@@ -6,7 +6,6 @@ booked. Slot IDs are clinic-local start times ("2026-10-01T09:00") — this is a
 demo calendar, so there is deliberately no timezone math.
 """
 
-import logging
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
@@ -14,8 +13,9 @@ from typing import Any
 from pymongo.errors import DuplicateKeyError
 
 from app.core.database import Database
+from app.core.logger import EventLogger
 
-logger = logging.getLogger("app.services.appointments")
+log = EventLogger("app.services.appointments")
 
 UTC = timezone.utc
 VISIT_TYPE = "New patient visit"
@@ -110,10 +110,7 @@ async def book(
         if existing and existing["patient_id"] == patient_id:
             return existing
         raise SlotUnavailable(slot_id) from exc
-    logger.info(
-        "appointment_booked patient_id=%s slot_id=%s call_id=%s",
-        patient_id,
-        slot_id,
-        call_id,
+    log.info(
+        "appointment_booked", patient_id=patient_id, slot_id=slot_id, call_id=call_id
     )
     return doc

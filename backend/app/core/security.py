@@ -2,15 +2,15 @@ import base64
 import binascii
 import hashlib
 import hmac
-import logging
 import secrets
 
 from fastapi import Cookie, Header, HTTPException, Request, Response
 from retell import Retell
 
 from app.core.config import Settings, get_settings
+from app.core.logger import EventLogger
 
-logger = logging.getLogger("app.core.security")
+log = EventLogger("app.core.security")
 
 _retell_client: Retell | None = None
 
@@ -32,12 +32,12 @@ async def verify_retell_signature(
         return
 
     if not x_retell_signature:
-        logger.warning("retell_signature_missing path=%s", request.url.path)
+        log.warning("retell_signature_missing", path=request.url.path)
         raise HTTPException(status_code=401, detail="Missing X-Retell-Signature.")
 
     # An empty secret makes the HMAC computable by anyone, so fail closed.
     if not settings.retell_api_key:
-        logger.error("retell_api_key_unset path=%s", request.url.path)
+        log.error("retell_api_key_unset", path=request.url.path)
         raise HTTPException(status_code=401, detail="Invalid X-Retell-Signature.")
 
     raw_body = (await request.body()).decode("utf-8")
@@ -45,7 +45,7 @@ async def verify_retell_signature(
         raw_body, api_key=settings.retell_api_key, signature=x_retell_signature
     )
     if not valid:
-        logger.warning("retell_signature_invalid path=%s", request.url.path)
+        log.warning("retell_signature_invalid", path=request.url.path)
         raise HTTPException(status_code=401, detail="Invalid X-Retell-Signature.")
 
 

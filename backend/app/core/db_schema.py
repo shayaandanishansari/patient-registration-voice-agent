@@ -1,14 +1,14 @@
 """Database-side enforcement for the patients collection: the
 $jsonSchema validator that enforces docs/patient_field_spec.xlsx."""
 
-import logging
 
 from pymongo.errors import OperationFailure
 
 from app.core.database import Database
+from app.core.logger import EventLogger
 from app.core.validation import SEX_VALUES, US_STATE_CODES
 
-logger = logging.getLogger("app.core.db_schema")
+log = EventLogger("app.core.db_schema")
 
 _STRING = {"bsonType": "string"}
 _OPTIONAL_STRING = {"bsonType": ["string", "null"]}
@@ -85,4 +85,4 @@ async def apply_patient_schema(db: Database) -> None:
             validationAction="error",
         )
     except OperationFailure as exc:
-        logger.warning("patients schema validator not applied: %s", exc)
+        log.warning("patient_schema_not_applied", error=str(exc))

@@ -1,14 +1,14 @@
-import logging
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
 from app.core.database import DbDep
+from app.core.logger import EventLogger
 from app.core.security import verify_retell_signature
 from app.services import calls as calls_service
 
-logger = logging.getLogger("app.routers.retell_webhook")
+log = EventLogger("app.routers.retell_webhook")
 
 # No signature dependency here: a bare GET connectivity check from the Retell
 # dashboard's "Test" button carries no signature to verify.
@@ -63,38 +63,25 @@ async def retell_webhook(request: Request, db: DbDep) -> dict[str, Any]:
     if not raw:
         # Retell's dashboard connectivity test may send an empty POST just to
         # confirm the URL is reachable and returns 2xx.
-        logger.info("webhook empty_probe")
+        log.info("webhook_empty_probe")
         return {"status": "ok"}
 
     try:
         body: dict[str, Any] = await request.json()
     except ValueError:
-        logger.info("webhook unparseable_body")
+        log.info("webhook_unparseable_body", body=raw.decode("utf-8", "replace"))
         return {"status": "ok"}
 
     event = body.get("event")
     call = body.get("call") or {}
     call_id = call.get("call_id")
+    # Everything Retell sent, as sent. This is also the conversation log the
+    # brief asks for: call_ended carries the transcript, call_analyzed the
+    # summary. Both also land on the calls document, linked to the patient.
+    log.info("retell_webhook", webhook_event=event, call_id=call_id, body=body)
 
     if not call_id or event not in HANDLED_EVENTS:
-        logger.info("webhook event=%s ignored", event)
         return {"status": "ok"}
 
-    fields = _extract_call_fields(call)
-    await calls_service.upsert_from_webhook(db, call_id, fields)
-    logger.info(
-        "webhook event=%s call_id=%s disconnection_reason=%s",
-        event,
-        call_id,
-        fields["disconnection_reason"],
-    )
-    # Conversation log (observability requirement). The transcript also
-    # lands on the calls document, linked to the patient via
-    # patients_created / verified_patient_id.
-    if event == "call_ended" and fields["transcript"]:
-        logger.info("call_transcript call_id=%s\n%s", call_id, fields["transcript"])
-    if event == "call_analyzed":
-        summary = (fields["call_analysis"] or {}).get("call_summary")
-        if summary:
-            logger.info("call_summary call_id=%s summary=%s", call_id, summary)
+    await calls_service.upsert_from_webhook(db, call_id, _extract_call_fields(call))
     return {"status": "ok"}

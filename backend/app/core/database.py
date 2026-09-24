@@ -6,6 +6,10 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from app.core.config import Settings
 
+# Log documents expire after this long (TTL index on logs.ts). Changing it
+# needs the existing index dropped or collMod'ed first.
+LOG_RETENTION_DAYS = 90
+
 
 class Database:
     def __init__(self, client: AsyncIOMotorClient, db: AsyncIOMotorDatabase) -> None:
@@ -24,6 +28,10 @@ class Database:
     def appointments(self):
         return self.db["appointments"]
 
+    @property
+    def logs(self):
+        return self.db["logs"]
+
     async def ping(self) -> None:
         await self.db.command("ping")
 
@@ -41,6 +49,14 @@ class Database:
         # Unique slot_id is what makes double-booking impossible.
         await self.appointments.create_index("slot_id", unique=True)
         await self.appointments.create_index("patient_id")
+        await self.logs.create_index(
+            "ts", expireAfterSeconds=LOG_RETENTION_DAYS * 24 * 60 * 60
+        )
+        await self.logs.create_index([("event", 1), ("ts", -1)])
+        await self.logs.create_index([("level", 1), ("ts", -1)])
+        await self.logs.create_index("request_id")
+        await self.logs.create_index("fields.call_id", sparse=True)
+        await self.logs.create_index("fields.patient_id", sparse=True)
 
 
 def connect(settings: Settings) -> Database:

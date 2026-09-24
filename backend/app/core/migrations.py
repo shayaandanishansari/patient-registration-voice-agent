@@ -3,14 +3,14 @@
 linked by member_id). Runs at startup; only touches patients that still lack
 `patient_id`, so it's a no-op once everything is upgraded."""
 
-import logging
 import uuid
 from typing import Any
 
 from app.core.database import Database
+from app.core.logger import EventLogger
 from app.core.validation import SEX_SYNONYMS
 
-logger = logging.getLogger("app.core.migrations")
+log = EventLogger("app.core.migrations")
 
 
 async def migrate_legacy_records(db: Database) -> None:
@@ -64,4 +64,4 @@ async def migrate_legacy_records(db: Database) -> None:
             update["$set"]["verified_patient_id"] = verified
         await db.calls.update_one({"_id": call["_id"]}, update)
 
-    logger.info("migrated %d legacy patient records", len(member_to_patient))
+    log.info("legacy_records_migrated", count=len(member_to_patient))

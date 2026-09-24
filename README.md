@@ -123,7 +123,9 @@ in [`docs/security.md`](docs/security.md).
   no reschedule or cancel.
 - A single shared API key, not per-user auth.
 - The collected payload and transcripts are logged to stdout because the
-  brief asks for it. With real PHI they would be redacted.
+  brief asks for it, and every log event is also kept in MongoDB's `logs`
+  collection for 90 days (`app/core/logger.py`). With real PHI they would be
+  redacted.
 - Duplicate detection needs name + DOB + phone to all match. It won't catch
   someone who changed their phone number.
 

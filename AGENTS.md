@@ -85,7 +85,15 @@ dependencies installed. Layered layout:
   upgrade), `security.py` (Retell signature, API key, and the browser login + session
   cookie for `/dashboard` and `/docs`; see `docs/security.md`), `errors.py` (envelope error
   handlers: 400/401/404/409/422/500), `pagination.py` (cursor paging), `validation.py`
-  (field normalizers with short speakable error messages).
+  (field normalizers with short speakable error messages), `logger.py` (structured
+  logging; see below).
+- Logging: modules log through `EventLogger("app.x").info("event_name", **fields)`, not
+  bare `logging`. Each event prints one line to stdout (the brief's observability
+  requirement) and is batched into the `logs` collection by `MongoLogHandler`
+  (installed in the lifespan; 90-day TTL, `LOG_RETENTION_DAYS` in `database.py`).
+  `RequestLogMiddleware` logs an `http_request` event per request and stamps a
+  `request_id` (also the `X-Request-ID` response header) on every record. A Mongo
+  failure only drops log records; it never fails a request.
 - `app/models/` — Pydantic models. `patients.py` has `PatientCreate`/`PatientUpdate`,
   whose validators call `core/validation.py`. These are used by **both** the REST API and
   the voice tools, so the rules exist once. `common.py` has the `Envelope`/`ListEnvelope`
@@ -95,8 +103,9 @@ dependencies installed. Layered layout:
   `calls.py` (per-call verification/registration state), `appointments.py` (mock slots,
   booking).
 - `app/routers/` — `patients.py` (CRUD), `calls.py`, `appointments.py`, `health.py`,
-  `retell_tools.py` (7 tool endpoints under `/retell/tools/*`; the flow uses 4),
-  `retell_webhook.py` (idempotent upsert by `call_id`, logs transcript/summary, never
+  `retell_tools.py` (7 tool endpoints under `/retell/tools/*`; the flow uses 4; its
+  route class logs each call's args and response once),
+  `retell_webhook.py` (idempotent upsert by `call_id`, logs the full body, never
   touches verification state; its GET probe is the only public route besides `/health`),
   `docs.py` (`/docs`, `/redoc`, `/openapi.json` behind the key), `dashboard.py`.
 - Security rule: every route except `/health` and the webhook probe needs the API key or a

@@ -1,7 +1,6 @@
 """Exception handlers that keep every error in the API's
 {"data": null, "error": {...}} envelope."""
 
-import logging
 from typing import Any
 
 from fastapi import Request
@@ -10,7 +9,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger("app.core.errors")
+from app.core.logger import EventLogger
+
+log = EventLogger("app.core.errors")
 
 ERROR_CODES = {
     400: "bad_request",
@@ -72,15 +73,21 @@ async def validation_exception_handler(
 ) -> JSONResponse:
     errors = exc.errors()
     if any(err.get("type") == "json_invalid" for err in errors):
+        log.warning("request_invalid_json", path=request.url.path)
         return error_response(400, "Request body is not valid JSON.")
+    details = _field_errors(errors)
+    # Field names only: the rejected values may be patient data.
+    log.warning(
+        "request_validation_failed",
+        path=request.url.path,
+        fields=[d["field"] for d in details],
+    )
     if all(err.get("loc", ("",))[0] in ("query", "path") for err in errors):
         # Malformed query string / path: a bad request, not a bad resource.
-        return error_response(400, "Invalid request parameters.", _field_errors(errors))
-    return error_response(
-        422, "Some fields are invalid.", _field_errors(errors)
-    )
+        return error_response(400, "Invalid request parameters.", details)
+    return error_response(422, "Some fields are invalid.", details)
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception("unhandled_error path=%s", request.url.path)
+    log.exception("unhandled_error", method=request.method, path=request.url.path)
     return error_response(500, "Something went wrong on our side. Please try again.")
