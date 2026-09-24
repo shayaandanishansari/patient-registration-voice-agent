@@ -56,6 +56,15 @@ export function PatientFiltersForm({
         />
         Include deleted
       </label>
+      <label className="flex items-center gap-2 pb-2 text-sm text-slate-600">
+        <input
+          type="checkbox"
+          checked={draft.possible_duplicates ?? false}
+          onChange={(e) => setDraft({ ...draft, possible_duplicates: e.target.checked })}
+          className="size-4 rounded border-slate-300 accent-brand-600"
+        />
+        Possible duplicates only
+      </label>
       <div className="flex gap-2">
         <Button type="submit">Search</Button>
         <Button variant="ghost" onClick={reset}>

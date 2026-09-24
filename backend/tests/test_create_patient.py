@@ -96,13 +96,18 @@ async def test_create_patient_two_people_same_call(client, db):
     assert len(call_doc["patients_created"]) == 2
 
 
-async def test_same_person_on_a_later_call_is_a_duplicate(client, db):
-    await register_by_voice(client, "call-dup-1")
-    data = await register_by_voice(client, "call-dup-2", {**VOICE_ARGS, "first_name": "JANE"})
-    assert data["status"] == "duplicate"
-    assert data["patient_name"] == "Jane Doe"
-    assert data["member_id"] == ""
-    assert await db.patients.count_documents({}) == 1
+async def test_same_person_on_a_later_call_is_registered_without_being_told(client, db):
+    # Without a member ID the caller isn't verified, so the agent must not
+    # reveal that a record exists. They get a new record; staff merge later.
+    first = await register_by_voice(client, "call-dup-1")
+    second = await register_by_voice(
+        client, "call-dup-2", {**VOICE_ARGS, "first_name": "JANE"}
+    )
+    assert second["status"] == "created"
+    assert second["member_id"] not in ("", first["member_id"])
+    assert second["patient_name"] == "JANE Doe"  # their own words, not the record's
+    assert "already" not in second["message"]
+    assert await db.patients.count_documents({}) == 2
 
 
 async def test_household_member_on_same_phone_is_not_a_duplicate(client, db):
@@ -113,34 +118,6 @@ async def test_household_member_on_same_phone_is_not_a_duplicate(client, db):
         {**VOICE_ARGS, "first_name": "Jimmy", "date_of_birth": "2015-06-01"},
     )
     assert data["status"] == "created"
-
-
-async def test_check_existing_patient(client):
-    await register_by_voice(client, "call-check-1")
-
-    async def check(args):
-        response = await post_signed(
-            client,
-            "/retell/tools/check-existing-patient",
-            retell_tool_body("check_existing_patient", "call-check-2", args),
-        )
-        return response.json()
-
-    identity = {k: VOICE_ARGS[k] for k in ("first_name", "last_name", "date_of_birth", "phone_number")}
-    found = await check(identity)
-    assert found == {
-        "status": "existing",
-        "patient_name": "Jane Doe",
-        "message": "A registration with these details already exists.",
-    }
-
-    other = await check({**identity, "first_name": "Jimmy"})
-    assert other["status"] == "none"
-    assert other["patient_name"] == ""
-
-    bad_phone = await check({**identity, "phone_number": "123"})
-    assert bad_phone["status"] == "invalid"
-    assert "phone number" in bad_phone["message"]
 
 
 async def test_db_failure_returns_error_not_silence(client, db, monkeypatch):

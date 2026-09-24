@@ -49,9 +49,11 @@ phone line this is. Briefly:
 - **Identity is verified on member ID + full name + DOB** before touching an existing
   record, and post-verification access is bound server-side to Retell's `call_id`.
 - **Duplicate detection** (the brief's bonus) matches on phone + name + DOB together.
-  Phone alone isn't identity (households share lines). The backend implements it; the
-  voice flow has no branch for it yet, so a duplicate registration by phone falls to the
-  System Error node (open item in `TODO.md`).
+  Phone alone isn't identity (households share lines). REST refuses a duplicate (409).
+  Voice saves it as a new record and never mentions the match, because that would
+  confirm a record to an unverified caller. Staff see it on the dashboard (Overview
+  tile, patient page, `?possible_duplicates=true`), computed on read, not stored. Don't
+  "fix" this by making voice refuse duplicates or tell the caller.
 - **Scheduling** is out of scope for this line: callers are sent to the front desk. A mock
   scheduling backend lives on the `feature/appointment-scheduling` branch, not on `main`.
 - A caller who describes a medical emergency is told to hang up and call 911 (scope rule
@@ -105,7 +107,7 @@ dependencies installed. Layered layout:
 - `app/routers/` — `patients.py` (CRUD), `calls.py`, `logs.py`
   (read the `logs` collection by time range, level, event, call), `stats.py`
   (headline counts for the dashboard homepage), `health.py`,
-  `retell_tools.py` (5 tool endpoints under `/retell/tools/*`; the flow uses 4; its
+  `retell_tools.py` (the 4 tool endpoints under `/retell/tools/*` the flow calls; its
   route class logs each call's args and response once),
   `retell_webhook.py` (idempotent upsert by `call_id`, logs the full body, never
   touches verification state; its GET probe is the only public route besides `/health`),

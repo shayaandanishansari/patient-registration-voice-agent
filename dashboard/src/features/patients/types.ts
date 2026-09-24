@@ -8,4 +8,6 @@ export type PatientFilters = {
   date_of_birth?: string;
   phone_number?: string;
   include_deleted?: boolean;
+  /** Only records that share name, DOB and phone with another record. */
+  possible_duplicates?: boolean;
 };

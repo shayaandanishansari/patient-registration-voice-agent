@@ -6,7 +6,7 @@ import { Card } from "@/components/Card";
 import { ErrorMessage, Loading } from "@/components/QueryState";
 import { CallDetail, CallList, RecentCalls, useCall } from "@/features/calls";
 import { RecentLogs } from "@/features/logs";
-import { PatientProfile, RecentPatients, usePatient } from "@/features/patients";
+import { PatientProfile, PossibleDuplicates, RecentPatients, usePatient } from "@/features/patients";
 import { StatTiles } from "@/features/stats";
 
 function ViewAll({ to }: { to: string }) {
@@ -56,6 +56,7 @@ export function PatientRoute() {
       ) : (
         <>
           <PatientProfile patient={query.data} />
+          <PossibleDuplicates patientId={patientId} />
           <Card title="Calls">
             <CallList patientId={patientId} />
           </Card>

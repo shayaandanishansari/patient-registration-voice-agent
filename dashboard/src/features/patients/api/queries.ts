@@ -25,6 +25,14 @@ export function usePatient(patientId: string) {
   });
 }
 
+/** Other active records with the same name, DOB and phone. */
+export function usePatientDuplicates(patientId: string) {
+  return useQuery({
+    queryKey: ["patient", patientId, "duplicates"],
+    queryFn: () => getOne<Patient[]>(`/patients/${patientId}/duplicates`),
+  });
+}
+
 /** The newest registrations (the homepage preview). */
 export function useRecentPatients(limit: number) {
   return useQuery({

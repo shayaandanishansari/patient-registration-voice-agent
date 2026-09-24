@@ -36,9 +36,6 @@ MongoDB Atlas — collections: patients, calls, logs
 REST API: /patients (CRUD), /calls, /logs, /stats, /health
 ```
 
-A fifth endpoint, `check-existing-patient`, runs the duplicate check on its
-own. It's tested but not called by the current flow.
-
 ## Architecture decisions
 
 **Stack.**
@@ -70,6 +67,20 @@ shared infrastructure (config, database, security, errors, validation,
 logging, pagination, migrations). Every write and every patient rule goes
 through a service function, whichever endpoint calls it. Read-only lists
 and stats query the collections directly, since there's no rule to share.
+
+**Duplicates: the REST API refuses them, the phone line registers them
+silently.** Identity on the phone is member ID + full name + DOB. Name, DOB and
+phone can be known by someone else, so telling a caller "you're already
+registered" would confirm that a record exists to a person who hasn't
+verified. Voice therefore saves a new record without mentioning the match,
+which is what the flow promises a caller who lost their member ID ("any
+duplicate is merged in person"). The match is logged and surfaced to staff:
+`GET /patients/{id}/duplicates`, `?possible_duplicates=true` and a count in
+`/stats`. It's computed from the data rather than stored, so it's never
+stale. `POST /patients` refuses with `409`, because its callers are trusted
+and should update the existing record. Rationale in
+[`../docs/identity-voiceagent.html`](../docs/identity-voiceagent.html); the
+code is in `services/patients.py`.
 
 **Identity is bound to the call, not to the model.** Verification records
 the patient against Retell's `call_id` on the server. `get-patient` and
@@ -159,21 +170,22 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/patients` | Filters: `?last_name=` (case-insensitive), `?date_of_birth=` (either format), `?phone_number=` (any format), `?member_id=`, `?include_deleted=true` |
+| GET | `/patients` | Filters: `?last_name=` (case-insensitive), `?date_of_birth=` (either format), `?phone_number=` (any format), `?member_id=`, `?possible_duplicates=true`, `?include_deleted=true` |
 | GET | `/patients/{patient_id}` | 404 if unknown or soft-deleted, 400 if not a UUID |
+| GET | `/patients/{patient_id}/duplicates` | Other active records with the same name, DOB and phone (see the Duplicates decision above) |
 | POST | `/patients` | 201 with the created record. 409 if the same person (name + DOB + phone) already exists. |
 | PUT | `/patients/{patient_id}` | Partial update: only the fields sent change. `null` clears an optional field. Required fields can't be cleared. |
 | DELETE | `/patients/{patient_id}` | Soft delete: sets `deleted_at` and returns the record |
 | GET | `/calls`, `/calls/{call_id}` | `?patient_id=` lists the calls that registered or verified a patient |
 | GET | `/logs` | Log records, newest first (kept 90 days). Filters: `?since=`, `?until=` (ISO datetimes), `?level=` (minimum level), `?event=`, `?hide_http=true`, `?call_id=`, `?request_id=` |
 | GET | `/logs/events` | Every event name logged so far, for filtering |
-| GET | `/stats` | Headline counts for the dashboard: live calls, calls and new patients in the last 24h, average call duration, totals, errors and warnings |
+| GET | `/stats` | Headline counts for the dashboard: live calls, calls and new patients in the last 24h, average call duration, totals, possible duplicates, errors and warnings |
 | GET | `/health` | No auth. Checks the database connection. |
 | GET | `/docs`, `/redoc`, `/openapi.json` | API docs. The browser asks for a login (any username, the API key as password); `/openapi.json` also takes the header. |
 | GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Needs the key: the browser asks for a login (any username, the API key as password), then a session cookie covers the dashboard's API calls. |
 
 The Retell routes aren't part of this API: `POST /retell/tools/*` (the four
-tools in the Architecture diagram, plus `check-existing-patient`) and
+tools in the Architecture diagram) and
 `POST /retell/webhook` need Retell's
 `X-Retell-Signature` instead of the key. `GET /retell/webhook` is an open
 reachability check. For the live list with request and response schemas, open
@@ -229,7 +241,7 @@ welcome ("register, or check/update an existing registration?")
  │               ─> reg_create (create_patient)
  │                    ├─ created ─> reg_success (member ID read in groups)
  │                    ├─ invalid ─> reg_fix (re-ask that one field) ─> reg_create
- │                    └─ else (duplicate, error, timeout) ─> system_error (apology, ends call)
+ │                    └─ else (error, timeout) ─> system_error (apology, ends call)
  ├─ check/update ─> verify_collect (member ID + full name + DOB, read back)
  │                   ─> verify_check (verify_patient)
  │                        ├─ verified ─> manage_profile (read back / update, via
@@ -289,7 +301,7 @@ stop, and the three closing lines are spoken in the caller's language.
 | Database write fails | The tool returns HTTP 500 and Retell takes the else-edge to `system_error`, which apologizes and ends the call. There is never silence (see `test_db_failure_returns_error_not_silence`). |
 | Tool call retried by Retell | `create-patient` is idempotent per call + name + DOB. Updates are naturally idempotent. |
 | Call drops mid-registration | Nothing is written until the caller confirms the read-back, so there are no half-records. The webhook still records the call, its transcript and its `disconnection_reason`. On the next call they start over. |
-| Returning caller registers again | The server refuses the duplicate (phone + name + DOB), but the flow has no branch for it yet, so it reaches `system_error` and Sarah says she had trouble saving. Callers who say they are registered are routed to verification instead. |
+| Returning caller registers again | With their member ID they verify and update instead. Without it, a phone + name + DOB match is saved as a new record and never mentioned, because saying so would confirm a record to an unverified caller. Staff see the pair on the dashboard (see the Duplicates decision above). |
 | Household sharing one phone | A phone match alone isn't treated as a duplicate: a household member with a different name or DOB registers normally. |
 | Wrong verification details | One generic failure message, then the call ends. Which detail was wrong is never revealed. Soft-deleted patients can't verify. |
 
@@ -360,8 +372,8 @@ python -m pytest -q    # mongomock-motor, no real database needed
   about appointments are sent to the front desk. A mock scheduling backend
   is kept on the `feature/appointment-scheduling` branch.
 - **One shared API key**, not per-user auth or roles.
-- **A duplicate registration has no branch in the flow.** It ends in
-  `system_error` instead of an offer to verify and update.
+- **No merge action.** Staff can see possible duplicates but merge them
+  outside this system.
 - **Duplicate detection needs name + DOB + phone together.** A patient who
   changed their phone number won't be caught; a person merges those records
   in person.
@@ -370,7 +382,7 @@ python -m pytest -q    # mongomock-motor, no real database needed
 
 ## Next steps
 
-- Branch the flow on a duplicate at create: offer to verify and update.
+- A merge action for possible duplicates.
 - A lockout or escalation to a human after N failed verifications across calls.
 - Per-user dashboard auth, and PHI redaction in logs.
 - Scheduling as its own line or agent, backed by a provider calendar.

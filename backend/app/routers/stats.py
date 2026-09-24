@@ -7,7 +7,7 @@ from app.core.database import Database, DbDep
 from app.core.security import require_api_key
 from app.models.common import Envelope
 from app.models.stats import StatsOut
-from app.services.patients import ACTIVE
+from app.services.patients import ACTIVE, possible_duplicate_ids
 
 router = APIRouter(
     prefix="/stats", tags=["stats"], dependencies=[Depends(require_api_key)]
@@ -43,6 +43,7 @@ async def get_stats(db: DbDep) -> Envelope[StatsOut]:
         patients_24h,
         errors_24h,
         warnings_24h,
+        duplicate_groups,
     ) = await asyncio.gather(
         db.calls.count_documents(
             {"status": "ongoing", "started_at": {"$gte": now - LIVE_CALL_WINDOW}}
@@ -56,6 +57,7 @@ async def get_stats(db: DbDep) -> Envelope[StatsOut]:
             {"ts": {"$gte": day_ago}, "level": {"$in": ["ERROR", "CRITICAL"]}}
         ),
         db.logs.count_documents({"ts": {"$gte": day_ago}, "level": "WARNING"}),
+        possible_duplicate_ids(db),
     )
 
     return Envelope(
@@ -67,6 +69,7 @@ async def get_stats(db: DbDep) -> Envelope[StatsOut]:
             calls_total=calls_total,
             patients_total=patients_total,
             patients_24h=patients_24h,
+            possible_duplicates=len(duplicate_groups),
             errors_24h=errors_24h,
             warnings_24h=warnings_24h,
         )

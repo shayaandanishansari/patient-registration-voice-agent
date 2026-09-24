@@ -65,6 +65,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/patients/{patient_id}/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Patient Duplicates
+         * @description Other active records with the same name, DOB and phone, oldest first.
+         *
+         *     Voice registration saves these instead of telling an unverified caller
+         *     that a record already exists (see app/services/patients.py). Staff use
+         *     this list to merge them in person.
+         */
+        get: operations["get_patient_duplicates_patients__patient_id__duplicates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/calls": {
         parameters: {
             query?: never;
@@ -153,23 +177,6 @@ export interface paths {
         get: operations["get_stats_stats_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/retell/tools/check-existing-patient": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Check Existing Patient */
-        post: operations["check_existing_patient_retell_tools_check_existing_patient_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -341,6 +348,12 @@ export interface components {
         /** Envelope[StatsOut] */
         Envelope_StatsOut_: {
             data?: components["schemas"]["StatsOut"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+        };
+        /** Envelope[list[PatientOut]] */
+        Envelope_list_PatientOut__: {
+            /** Data */
+            data?: components["schemas"]["PatientOut"][] | null;
             error?: components["schemas"]["ApiError"] | null;
         };
         /** Envelope[list[str]] */
@@ -650,6 +663,11 @@ export interface components {
             /** Patients 24H */
             patients_24h: number;
             /**
+             * Possible Duplicates
+             * @description People with more than one active record (same name, DOB and phone). Voice registers them anyway rather than reveal a record to an unverified caller; staff merge them in person.
+             */
+            possible_duplicates: number;
+            /**
              * Errors 24H
              * @description ERROR and CRITICAL log records.
              */
@@ -726,6 +744,8 @@ export interface operations {
                 /** @description Any common U.S. format. */
                 phone_number?: string | null;
                 member_id?: string | null;
+                /** @description Only patients who share name, DOB and phone with another active record (voice registrations that need merging in person). */
+                possible_duplicates?: boolean;
                 include_deleted?: boolean;
                 limit?: number;
                 cursor?: string | null;
@@ -893,6 +913,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_PatientOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_patient_duplicates_patients__patient_id__duplicates_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-api-key"?: string | null;
+            };
+            path: {
+                patient_id: string;
+            };
+            cookie?: {
+                api_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_PatientOut__"];
                 };
             };
             /** @description Validation Error */
@@ -1079,43 +1134,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_StatsOut_"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    check_existing_patient_retell_tools_check_existing_patient_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-retell-signature"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RetellToolRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
             /** @description Validation Error */

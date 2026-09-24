@@ -113,19 +113,46 @@ in [`docs/security.md`](docs/security.md).
 
 | Bonus | Status | How it's handled |
 |---|---|---|
-| **Duplicate detection** | Done, with stronger identity checks | Returning callers are recognized and offered an update instead of a new record: Sarah verifies member ID + full name + DOB, then reads the record back and updates it. Caller ID alone isn't used as identity because households share phone lines ([`docs/identity-voiceagent.html`](docs/identity-voiceagent.html)). Creating a patient also checks for a duplicate on phone + name + DOB (the REST API returns `409`). |
+| **Duplicate detection** | Done, without leaking records | A returning caller with their member ID verifies (member ID + full name + DOB) and updates their record instead of creating a new one. A caller who registers again *without* a member ID is detected on phone + name + DOB, but Sarah never tells them; see [Duplicates](#duplicates-detected-never-revealed) below. The dashboard shows these on the Overview ("Possible duplicates") and on each patient, for staff to merge in person. The REST API refuses a duplicate with `409`. |
 | **Appointment scheduling** | Deliberately out of scope | Scheduling is usually a separate line or agent, so Sarah stays a registration and patient-information coordinator. Callers who ask about appointments are sent to the front desk. A tested mock scheduling backend (slots, booking, double-booking protection) is on the [`feature/appointment-scheduling`](https://github.com/shayaandanishansari/patient-registration-voice-agent/tree/feature/appointment-scheduling) branch, left out of `main` to keep the service focused. |
 | **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. |
 | **Call recording / transcript** | Done | Retell's webhook stores the transcript, recording URL and call analysis (summary) on a `calls` document linked to the patient it registered or verified. Visible in `GET /calls` and the dashboard. |
 | **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients, calls with transcripts, and logs. |
-| **Automated tests** | Done | 144 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
+| **Automated tests** | Done | 147 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
+
+### Duplicates: detected, never revealed
+
+The brief's bonus says a returning caller should be recognized and offered an
+update. Doing that from name, DOB and phone would be a privacy hole: those are
+details a relative, an ex or a stranger with an old form can know. "It looks
+like you're already registered" would confirm to an unverified caller that
+someone's record exists, and "would you like to update it?" would hand them
+the record. On this line identity is **member ID + full name + DOB**
+([`docs/identity-voiceagent.html`](docs/identity-voiceagent.html)).
+
+So duplicates are handled by channel:
+
+- **Phone, with a member ID:** the caller verifies and updates their own record.
+- **Phone, without one:** the backend still runs the phone + name + DOB check,
+  but saves a new record and gives a new member ID, saying nothing about the
+  match. That's what Sarah already promises a caller who lost their ID:
+  "register a new profile, and any duplicate is merged in person."
+- **Staff:** the match is logged (`patient_duplicate_detected`), counted on the
+  dashboard Overview, listed on each affected patient
+  (`GET /patients/{id}/duplicates`), and filterable
+  (`GET /patients?possible_duplicates=true`), so it can be merged with a photo
+  ID. It's worked out from the data when asked, not stored as a flag, so a
+  merge or delete needs no cleanup.
+- **REST API:** `POST /patients` refuses a duplicate with `409`. Its callers are
+  trusted staff or systems, who should update the existing record instead.
+
+Phone alone is never a match (households share lines), so a family member
+with a different name or DOB registers normally.
 
 ## Known limitations and trade-offs
 
-- The duplicate check on create isn't a branch in the call flow yet. A
-  registered patient who starts a *new* registration with the same phone,
-  name and DOB hears Sarah say there was trouble saving, instead of being
-  offered to update.
+- There's no merge action yet: staff can see possible duplicates but merge
+  them outside this system.
 - The call flow was designed and tested mostly in English. Other languages
   rely on the model's translation of the same prompts.
 - Verification is exact match (case-insensitive), with no lockout across
@@ -140,7 +167,7 @@ in [`docs/security.md`](docs/security.md).
 
 ## Next steps
 
-- Branch the call flow on a duplicate at create (offer to verify and update).
+- A merge action for possible duplicates in the dashboard.
 - Lockout and human escalation after repeated failed verifications.
 - Per-user dashboard auth, and PHI redaction in logs.
 - Scheduling as its own line or agent, backed by a provider calendar.

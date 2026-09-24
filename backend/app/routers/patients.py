@@ -50,6 +50,11 @@ async def list_patients(
         default=None, description="Any common U.S. format."
     ),
     member_id: str | None = None,
+    possible_duplicates: bool = Query(
+        default=False,
+        description="Only patients who share name, DOB and phone with another "
+        "active record (voice registrations that need merging in person).",
+    ),
     include_deleted: bool = False,
     limit: int = Query(default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
     cursor: str | None = None,
@@ -70,6 +75,9 @@ async def list_patients(
         )
     if member_id:
         query["member_id"] = member_id.strip()
+    if possible_duplicates:
+        groups = await patients_service.possible_duplicate_ids(db)
+        query["patient_id"] = {"$in": [pid for group in groups for pid in group]}
 
     docs, next_cursor = await paginate(db.patients, query, limit, cursor)
     return ListEnvelope(
@@ -84,6 +92,20 @@ async def get_patient(db: DbDep, patient_id: str) -> Envelope[PatientOut]:
     if not doc:
         raise HTTPException(status_code=404, detail=NOT_FOUND)
     return Envelope(data=_out(doc))
+
+
+@router.get("/{patient_id}/duplicates", response_model=Envelope[list[PatientOut]])
+async def get_patient_duplicates(db: DbDep, patient_id: str) -> Envelope[list[PatientOut]]:
+    """Other active records with the same name, DOB and phone, oldest first.
+
+    Voice registration saves these instead of telling an unverified caller
+    that a record already exists (see app/services/patients.py). Staff use
+    this list to merge them in person."""
+    doc = await patients_service.get_patient(db, _require_uuid(patient_id))
+    if not doc:
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
+    matches = await patients_service.find_possible_duplicates(db, doc)
+    return Envelope(data=[_out(d) for d in matches])
 
 
 @router.post(

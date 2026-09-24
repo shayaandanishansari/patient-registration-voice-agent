@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from tests.conftest import API_HEADERS, register_by_voice
+from tests.conftest import API_HEADERS, VOICE_ARGS, register_by_voice
 
 NEW_PATIENT = {
     "first_name": "Maria",
@@ -103,6 +103,58 @@ async def test_create_duplicate_is_409(client):
     response = await client.post("/patients", json=NEW_PATIENT, headers=API_HEADERS)
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "conflict"
+
+
+# --- Possible duplicates --------------------------------------------------------
+# Voice registers a returning caller anyway (it can't tell an unverified caller
+# a record exists), so staff need to find those pairs. They're worked out on
+# read from name + DOB + phone, not stored.
+
+
+async def test_voice_duplicate_is_listed_on_each_record(client):
+    first = await register_by_voice(client, "call-pd-1")
+    second = await register_by_voice(client, "call-pd-2")
+    other = await register_by_voice(
+        client,
+        "call-pd-3",
+        {**VOICE_ARGS, "first_name": "Jimmy", "date_of_birth": "2015-06-01"},
+    )
+
+    async def duplicates_of(member_id: str) -> list[str]:
+        listed = await client.get(
+            f"/patients?member_id={member_id}", headers=API_HEADERS
+        )
+        patient_id = listed.json()["data"][0]["patient_id"]
+        response = await client.get(
+            f"/patients/{patient_id}/duplicates", headers=API_HEADERS
+        )
+        assert response.status_code == 200
+        return [p["member_id"] for p in response.json()["data"]]
+
+    assert await duplicates_of(first["member_id"]) == [second["member_id"]]
+    assert await duplicates_of(second["member_id"]) == [first["member_id"]]
+    assert await duplicates_of(other["member_id"]) == []
+
+
+async def test_possible_duplicates_filter_and_stats(client):
+    await register_by_voice(client, "call-pd-4")
+    await register_by_voice(client, "call-pd-5")
+    await _create(client)  # a different person
+
+    response = await client.get("/patients?possible_duplicates=true", headers=API_HEADERS)
+    names = {p["first_name"] for p in response.json()["data"]}
+    assert len(response.json()["data"]) == 2
+    assert names == {"Jane"}
+
+    stats = await client.get("/stats", headers=API_HEADERS)
+    assert stats.json()["data"]["possible_duplicates"] == 1
+
+
+async def test_duplicates_of_unknown_patient_is_404(client):
+    response = await client.get(
+        f"/patients/{uuid.uuid4()}/duplicates", headers=API_HEADERS
+    )
+    assert response.status_code == 404
 
 
 # --- GET ------------------------------------------------------------------------

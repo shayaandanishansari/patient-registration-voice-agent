@@ -149,3 +149,17 @@ async def test_database_failure_never_reaches_the_caller(capsys):
         logging.getLogger("tests").removeHandler(sink)
 
     assert "log persistence failed" in capsys.readouterr().err
+
+
+async def test_voice_duplicate_is_logged_for_staff(client, db, log_sink):
+    # Voice registers a returning caller anyway; the log is the trail of
+    # when and on which call it happened.
+    first = await register_by_voice(client, "call-duplog-1")
+    await register_by_voice(client, "call-duplog-2")
+    await log_sink.drain()
+
+    doc = await db.logs.find_one({"event": "patient_duplicate_detected"})
+    existing = await db.patients.find_one({"member_id": first["member_id"]})
+    assert doc["fields"]["existing_patient_id"] == existing["patient_id"]
+    assert doc["fields"]["call_id"] == "call-duplog-2"
+    assert doc["fields"]["action"] == "registered_anyway"

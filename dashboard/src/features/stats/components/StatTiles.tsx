@@ -64,7 +64,7 @@ export function StatTiles() {
   return (
     <div className="space-y-3">
       {error && <ErrorMessage error={error} />}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatTile
           to="/calls"
           label="Live calls"
@@ -88,6 +88,12 @@ export function StatTiles() {
           label="Patients"
           value={stats?.patients_total}
           hint={stats && `${stats.patients_24h} new in the last 24h`}
+        />
+        <StatTile
+          to="/patients?possible_duplicates=true"
+          label="Possible duplicates"
+          value={stats?.possible_duplicates}
+          hint={stats && "Same name, DOB & phone · merge in person"}
         />
         <StatTile
           to={problems > 0 ? "/logs?last=24h&level=WARNING" : "/logs?last=24h"}

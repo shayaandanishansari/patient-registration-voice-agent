@@ -16,6 +16,7 @@ function filtersFromParams(params: URLSearchParams): PatientFilters {
     date_of_birth: params.get("date_of_birth") ?? undefined,
     phone_number: params.get("phone_number") ?? undefined,
     include_deleted: params.get("include_deleted") === "true" || undefined,
+    possible_duplicates: params.get("possible_duplicates") === "true" || undefined,
   };
 }
 
@@ -34,7 +35,11 @@ export function PatientsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Patients</h1>
-        <p className="text-sm text-slate-500">Registrations from the phone line and the API.</p>
+        <p className="text-sm text-slate-500">
+          {filters.possible_duplicates
+            ? "Records that share a name, date of birth and phone number with another record. The phone line registers these rather than reveal an existing record to an unverified caller; merge them in person."
+            : "Registrations from the phone line and the API."}
+        </p>
       </div>
 
       <Card>

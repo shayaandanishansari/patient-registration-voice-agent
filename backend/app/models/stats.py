@@ -21,5 +21,10 @@ class StatsOut(BaseModel):
     calls_total: int
     patients_total: int = Field(description="Active (not deleted) patients.")
     patients_24h: int
+    possible_duplicates: int = Field(
+        description="People with more than one active record (same name, DOB "
+        "and phone). Voice registers them anyway rather than reveal a record to "
+        "an unverified caller; staff merge them in person."
+    )
     errors_24h: int = Field(description="ERROR and CRITICAL log records.")
     warnings_24h: int

@@ -54,7 +54,7 @@ def test_response_variables_read_real_keys(tool, response_keys):
 
 def test_equation_edges_use_real_status_values():
     statuses = {
-        "create_status": {"created", "invalid", "duplicate"},
+        "create_status": {"created", "invalid"},
         "verification_result": {"verified", "not_verified"},
     }
     for node in FLOW["nodes"]:

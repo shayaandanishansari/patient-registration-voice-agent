@@ -49,13 +49,6 @@ router = APIRouter(
 NOT_VERIFIED = {"status": "not_verified", "message": "This caller is not verified."}
 
 
-@router.post("/check-existing-patient")
-async def check_existing_patient(body: RetellToolRequest, db: DbDep) -> dict:
-    call_id = body.call.call_id
-    result = await patients_service.voice_check_existing(db, body.args)
-    return result
-
-
 @router.post("/create-patient")
 async def create_patient(body: RetellToolRequest, db: DbDep) -> dict:
     call_id = body.call.call_id

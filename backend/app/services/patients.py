@@ -4,6 +4,20 @@ Both the REST API (app/routers/patients.py) and the Retell voice tools
 (app/routers/retell_tools.py) write through this module, so there is exactly
 one place that allocates IDs, detects duplicates, applies updates and logs the
 collected payload.
+
+Duplicates are handled differently per channel, on purpose:
+
+- REST (`POST /patients`) refuses a duplicate with 409. It's a staff or
+  system API, and the caller of it is trusted to update the existing record.
+- Voice registers the caller anyway and never mentions the match. On this
+  line, identity is member ID + full name + date of birth. Name, DOB and
+  phone are things a family member or a stranger can know, so telling a
+  caller "you're already registered" would confirm that someone's record
+  exists to a person who hasn't verified. The flow's forgot-member-ID path
+  promises exactly this: register a new profile, and any duplicate is merged
+  in person. So the match is logged (`patient_duplicate_detected`) and shown
+  to staff on the dashboard, where it can be merged with a photo ID. See
+  docs/identity-voiceagent.html.
 """
 
 import hashlib
@@ -119,29 +133,72 @@ def display_name(patient: dict[str, Any]) -> str:
     return f"{patient['first_name']} {patient['last_name']}"
 
 
-async def find_duplicate(db: Database, data: dict[str, Any]) -> dict[str, Any] | None:
-    """An active patient with the same phone number, name and date of birth.
+def _is_same_person(candidate: dict[str, Any], data: dict[str, Any]) -> bool:
+    return (
+        candidate["first_name"].lower() == data["first_name"].lower()
+        and candidate["last_name"].lower() == data["last_name"].lower()
+    )
 
-    Phone number alone is not identity — households share lines — so a
-    phone match only counts as a duplicate when the name and DOB the caller
-    just gave also match. That way the agent never discloses a name the
-    caller didn't say themselves."""
-    candidates = await db.patients.find(
-        {
-            **ACTIVE,
-            "phone_number": data["phone_number"],
-            "date_of_birth": data["date_of_birth"],
-        }
-    ).to_list(length=50)
-    first = data["first_name"].lower()
-    last = data["last_name"].lower()
-    for candidate in candidates:
-        if (
-            candidate["first_name"].lower() == first
-            and candidate["last_name"].lower() == last
-        ):
-            return candidate
-    return None
+
+async def _same_person_records(
+    db: Database, data: dict[str, Any], exclude_patient_id: str | None = None
+) -> list[dict[str, Any]]:
+    """Active patients with the same phone number, name and date of birth.
+
+    Phone number alone is not identity (households share lines), so a phone
+    match only counts when the name and DOB match too. A household member
+    with a different name or DOB is a different person."""
+    query: dict[str, Any] = {
+        **ACTIVE,
+        "phone_number": data["phone_number"],
+        "date_of_birth": data["date_of_birth"],
+    }
+    if exclude_patient_id:
+        query["patient_id"] = {"$ne": exclude_patient_id}
+    candidates = await db.patients.find(query).sort("created_at", 1).to_list(length=50)
+    return [c for c in candidates if _is_same_person(c, data)]
+
+
+async def find_duplicate(db: Database, data: dict[str, Any]) -> dict[str, Any] | None:
+    """The earliest active record for the same person, if there is one."""
+    matches = await _same_person_records(db, data)
+    return matches[0] if matches else None
+
+
+async def find_possible_duplicates(
+    db: Database, patient: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Other active records for the same person as `patient`, oldest first.
+
+    Worked out on read rather than stored as a flag, so it's always current:
+    merging or deleting one of the records makes it disappear here with no
+    cleanup."""
+    return await _same_person_records(db, patient, exclude_patient_id=patient["patient_id"])
+
+
+async def possible_duplicate_ids(db: Database) -> list[list[str]]:
+    """Every group of two or more active records for the same person, as
+    lists of patient_ids. Feeds the dashboard's "possible duplicates" count
+    and the `?possible_duplicates=true` patient filter."""
+    groups = await db.patients.aggregate(
+        [
+            {"$match": ACTIVE},
+            {
+                "$group": {
+                    "_id": {
+                        "phone_number": "$phone_number",
+                        "date_of_birth": "$date_of_birth",
+                        "first_name": {"$toLower": "$first_name"},
+                        "last_name": {"$toLower": "$last_name"},
+                    },
+                    "patient_ids": {"$push": "$patient_id"},
+                    "count": {"$sum": 1},
+                }
+            },
+            {"$match": {"count": {"$gt": 1}}},
+        ]
+    ).to_list(length=None)
+    return [g["patient_ids"] for g in groups]
 
 
 async def insert_patient(
@@ -151,9 +208,14 @@ async def insert_patient(
     source: str,
     call_id: str | None = None,
     idempotency_key: str | None = None,
+    refuse_duplicates: bool = True,
 ) -> dict[str, Any]:
-    """Insert a validated patient and return the stored document. Raises
-    DuplicatePatient if the same person is already registered."""
+    """Insert a validated patient and return the stored document.
+
+    If the same person is already registered, the match is always logged.
+    With refuse_duplicates (the REST API) it then raises DuplicatePatient;
+    without it (voice) the new record is saved anyway. The module docstring
+    explains why."""
     if idempotency_key:
         existing = await db.patients.find_one({"create_idempotency_key": idempotency_key})
         if existing:
@@ -172,8 +234,10 @@ async def insert_patient(
             existing_patient_id=duplicate.get("patient_id"),
             source=source,
             call_id=call_id,
+            action="refused" if refuse_duplicates else "registered_anyway",
         )
-        raise DuplicatePatient(duplicate)
+        if refuse_duplicates:
+            raise DuplicatePatient(duplicate)
 
     now = _now()
     doc: dict[str, Any] = {
@@ -306,25 +370,6 @@ def _validate_voice_fields(
         raise ValidationError(first_error_message(exc)) from exc
 
 
-async def voice_check_existing(db: Database, args: dict[str, Any]) -> dict[str, str]:
-    args = _canonical_args(args)
-    try:
-        data = _validate_voice_fields(
-            args, ("first_name", "last_name", "date_of_birth", "phone_number")
-        )
-    except ValidationError as exc:
-        return {"status": "invalid", "patient_name": "", "message": str(exc)}
-
-    duplicate = await find_duplicate(db, data)
-    if duplicate:
-        return {
-            "status": "existing",
-            "patient_name": display_name(duplicate),
-            "message": "A registration with these details already exists.",
-        }
-    return {"status": "none", "patient_name": "", "message": ""}
-
-
 async def voice_create_patient(
     db: Database, call_id: str, args: dict[str, Any]
 ) -> tuple[dict[str, str], str | None]:
@@ -338,17 +383,17 @@ async def voice_create_patient(
     key = _idempotency_key(
         call_id, data["first_name"], data["last_name"], data["date_of_birth"]
     )
-    try:
-        doc = await insert_patient(
-            db, data, source="voice", call_id=call_id, idempotency_key=key
-        )
-    except DuplicatePatient as dup:
-        return {
-            "status": "duplicate",
-            "member_id": "",
-            "patient_name": display_name(dup.existing),
-            "message": "A registration with these details already exists.",
-        }, None
+    # Never refuses a duplicate and never mentions one: without a member ID
+    # the caller isn't verified, so confirming a record exists would leak it.
+    # See the module docstring.
+    doc = await insert_patient(
+        db,
+        data,
+        source="voice",
+        call_id=call_id,
+        idempotency_key=key,
+        refuse_duplicates=False,
+    )
 
     return {
         "status": "created",
