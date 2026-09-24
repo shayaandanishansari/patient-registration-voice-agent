@@ -8,29 +8,34 @@ A take-home coding challenge: build a voice AI agent for patient
 pre-registration. The brief (`docs/CONFIDENTIAL/`, gitignored — candidate-only material)
 specifies a registration flow, a patient data model, a REST API (full CRUD on `/patients`
 with a `{data, error}` envelope and soft delete), and bonuses (duplicate detection,
-appointment scheduling, Spanish, transcripts, dashboard, tests). All of it is implemented;
-see the root `README.md` for the reviewer-facing summary.
+appointment scheduling, Spanish, transcripts, dashboard, tests). The core brief, transcripts,
+dashboard and tests are done. Duplicate detection and scheduling exist in the backend
+(tested, and the REST API uses the duplicate check) but are not wired into the voice flow,
+and there is no Spanish mode. See the root `README.md` for the reviewer-facing summary.
 
 ## Where we are
 
-Backend, agent flow and dashboard are built. The backend is deployed on Railway at
-`https://patient-registration-voice-agent-production-f401.up.railway.app`, but **the
-latest changes (REST CRUD at `/patients`, the new flow, scheduling) are not deployed yet**.
-To go live:
+Backend, agent flow and dashboard are built, and the backend is deployed on Railway at
+`https://patient-registration-voice-agent-production-f401.up.railway.app` (auto-deploys
+from `main`). The remaining steps before submitting are in the root `TODO.md`.
 
-1. Deploy the backend. On startup it migrates records written by the first version
-   (`app/core/migrations.py`, idempotent), creates indexes, and attaches the patients
-   `$jsonSchema` validator (needs Atlas `dbAdmin`; it logs a warning otherwise).
-2. Re-import `backend/assets/retell_agent_scripts/agent.json` into Retell. Its tool
-   URLs already point at the Railway URL. The agent language is `["en-US", "es-419"]`.
-   There is no upload script; import it through the Retell dashboard.
-3. On Railway: `ALLOW_UNSIGNED_REQUESTS=false`, `RETELL_API_KEY` set, and `API_KEY` set. Healthcheck path is now `/health`.
-4. Put the Retell phone number into the root `README.md` (marked TODO).
+- **Railway variables** come from `backend/.env.production` (gitignored), pasted into the
+  service's Raw Editor. Never paste the local `backend/.env` (development values). Needed:
+  `ENVIRONMENT=production`, `ALLOW_UNSIGNED_REQUESTS=false` (the app refuses to start on
+  Railway otherwise), `API_KEY`, and `RETELL_API_KEY` = the Retell key with the webhook
+  badge. Healthcheck path is `/health`.
+- **Retell agent:** import `backend/assets/retell_agent_scripts/agent.json` through the
+  Retell dashboard (there is no upload script). Its tool URLs already point at the Railway
+  URL. Set the agent's webhook URL to `/retell/webhook` there.
+- On startup the backend migrates records written by the first version
+  (`app/core/migrations.py`, idempotent), creates indexes, and attaches the patients
+  `$jsonSchema` validator (needs Atlas `dbAdmin`; it logs a warning otherwise).
 
 Stack decisions: MongoDB Atlas via Motor (async), verified in `playground/db_connection/`.
-Retell AI is the voice/telephony + LLM layer. The agent (global prompt, nodes, tools) lives
-in `backend/assets/retell_agent_scripts/agent.json`, a Retell agent export and the
-source of truth for the flow. `playground/retell_api/` keeps the earlier versions.
+Retell AI is the voice/telephony + LLM layer (the flow runs on Claude Sonnet 5). The agent
+(global prompt, nodes, tools) lives in `backend/assets/retell_agent_scripts/agent.json`, a
+Retell agent export and the source of truth for the flow. The flow uses 4 tools:
+`create_patient`, `verify_patient`, `get_patient_profile`, `update_patient_profile`. `playground/retell_api/` keeps the earlier versions.
 `tests/test_flow_contract.py` checks that the flow's tool URLs, argument names, response
 variables and equation-edge values match the backend. Run it after editing either side,
 because a mismatch fails silently on a live call (the flow just takes its else-edge).
@@ -43,11 +48,13 @@ phone line this is. Briefly:
 - **Identity is verified on member ID + full name + DOB** before touching an existing
   record, and post-verification access is bound server-side to Retell's `call_id`.
 - **Duplicate detection** (the brief's bonus) matches on phone + name + DOB together.
-  Phone alone isn't identity (households share lines), so the agent only ever says back a
-  name the caller just gave. It then offers to update via verification.
-- **Scheduling** is the same coordinator doing an adjacent task (first appointment only),
-  bound to the patient registered or verified on the call.
-- The call opens with the 911 emergency disclaimer.
+  Phone alone isn't identity (households share lines). The backend implements it; the
+  voice flow has no branch for it yet, so a duplicate registration by phone falls to the
+  System Error node (open item in `TODO.md`).
+- **Scheduling** is the same coordinator doing an adjacent task (first appointment only).
+  Built in the backend, deliberately not enabled in the voice flow.
+- A caller who describes a medical emergency is told to hang up and call 911 (scope rule
+  in the global prompt; there is no opening disclaimer).
 
 `docs/patient_field_spec.xlsx` specifies `patient_id` as a UUID, which is the REST resource
 ID. `member_id` (8 random digits) is the voice-facing ID the caller reads back to verify.
@@ -57,11 +64,12 @@ ID. `member_id` (8 random digits) is the voice-facing ID the caller reads back t
 | Path | What it is | Tracked? |
 |---|---|---|
 | `README.md` | Reviewer-facing overview, live demo details, stack justification | Yes |
-| `docs/` | Field spec, identity memo, index | Yes |
+| `docs/` | Field spec, identity memo, security review (`security.md`), index | Yes |
 | `docs/CONFIDENTIAL/` | Original brief (candidate-use-only) | No (gitignored) |
 | `backend/` | FastAPI backend + Retell agent export | Yes |
 | `dashboard/` | Vite/React dashboard over the REST API | Yes |
 | `playground/` | Experiments kept as a showcase of testing patterns | Yes |
+| `TODO.md` | Remaining steps before submitting, in order | Yes |
 | `.idea/` | PyCharm config — Python 3.14, Black | No |
 
 ## Backend (`backend/`)
@@ -74,7 +82,8 @@ dependencies installed. Layered layout:
 - `app/core/` — shared infrastructure: `config.py` (pydantic-settings), `database.py`
   (Motor client, `Database` wrapper with `patients`/`calls`/`appointments` and all indexes,
   `DbDep`), `db_schema.py` (patients `$jsonSchema`), `migrations.py` (legacy record
-  upgrade), `security.py` (Retell signature + `X-API-Key`), `errors.py` (envelope error
+  upgrade), `security.py` (Retell signature, API key, and the browser login + session
+  cookie for `/dashboard` and `/docs`; see `docs/security.md`), `errors.py` (envelope error
   handlers: 400/401/404/409/422/500), `pagination.py` (cursor paging), `validation.py`
   (field normalizers with short speakable error messages).
 - `app/models/` — Pydantic models. `patients.py` has `PatientCreate`/`PatientUpdate`,
@@ -86,9 +95,14 @@ dependencies installed. Layered layout:
   `calls.py` (per-call verification/registration state), `appointments.py` (mock slots,
   booking).
 - `app/routers/` — `patients.py` (CRUD), `calls.py`, `appointments.py`, `health.py`,
-  `retell_tools.py` (7 tool endpoints under `/retell/tools/*`), `retell_webhook.py`
-  (idempotent upsert by `call_id`, logs transcript/summary, never touches verification
-  state; tolerates Retell's connectivity-test GET/empty POST).
+  `retell_tools.py` (7 tool endpoints under `/retell/tools/*`; the flow uses 4),
+  `retell_webhook.py` (idempotent upsert by `call_id`, logs transcript/summary, never
+  touches verification state; its GET probe is the only public route besides `/health`),
+  `docs.py` (`/docs`, `/redoc`, `/openapi.json` behind the key), `dashboard.py`.
+- Security rule: every route except `/health` and the webhook probe needs the API key or a
+  Retell signature. `tests/test_security.py` sweeps all routes and fails on any that
+  doesn't return `401` anonymously, so a new route must be protected (or deliberately
+  added to its public list).
 - `assets/retell_agent_scripts/agent.json` — the Retell agent.
 - `tests/` — `mongomock-motor`-backed, no real DB. Run `python -m pytest -q` from
   `backend/`.
@@ -105,4 +119,7 @@ The backend also serves the dashboard at `/dashboard` (`app/routers/dashboard.py
 from a pre-built copy committed in `backend/assets/dashboard/`, because Railway only
 builds Python. After changing the dashboard, run `npm run build:backend` in
 `dashboard/` and commit the output. That build mode blanks `VITE_API_KEY`, so a local
-key never ships in the public bundle.
+key never ships in the public bundle, and skips the in-app sign-in: the backend asks for
+the key (browser login, any username) before serving the page and sets a session cookie
+the dashboard's API calls use. `npm run gen:api` needs the key in `API_KEY`
+(`dashboard/redocly.yaml` sends it).
