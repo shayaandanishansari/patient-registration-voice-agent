@@ -75,7 +75,7 @@ Phone call ⇄ Retell AI (telephony + STT/TTS + Claude Sonnet 5 conversation flo
 |---|---|
 | [`backend/`](backend/README.md) | FastAPI service, tests, and the Retell agent export (`assets/retell_agent_scripts/agent.json`, which contains the full system prompt and conversation flow) |
 | [`dashboard/`](dashboard/README.md) | Web UI over the API. Its production build is committed to `backend/assets/dashboard/` and served at `/dashboard` |
-| [`docs/`](docs/README.md) | Field spec, the design memo on what kind of phone line this is, and the security review ([`docs/security.md`](docs/security.md)) |
+| [`docs/`](docs/README.md) | [Design decisions](docs/design-decisions.md), the design memo on what kind of phone line this is, the system diagram, [every API route](docs/api-routes.md), the field spec, and the security review ([`docs/security.md`](docs/security.md)). All of them are also on the dashboard's Docs page. |
 | `playground/` | Early experiments (DB connection, Retell API) kept as a record of the testing approach |
 
 **[`backend/README.md`](backend/README.md) is the detailed write-up.** It
@@ -124,7 +124,7 @@ in [`docs/security.md`](docs/security.md).
 | **Appointment scheduling** | Deliberately out of scope | Scheduling is usually a separate line or agent, so Sarah stays a registration and patient-information coordinator. Callers who ask about appointments are sent to the front desk. A tested mock scheduling backend (slots, booking, double-booking protection) is on the [`feature/appointment-scheduling`](https://github.com/shayaandanishansari/patient-registration-voice-agent/tree/feature/appointment-scheduling) branch, left out of `main` to keep the service focused. |
 | **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. Names in any script register and verify: José, Zoë, Nguyễn, Müller, or अनिल (see [Names](#names-in-any-language) below). |
 | **Call recording / transcript** | Done | Retell's webhook stores the transcript, recording URL and call analysis (summary) on a `calls` document linked to the patient it registered or verified. Visible in `GET /calls` and the dashboard. |
-| **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients (including possible duplicates), calls with transcripts, and logs. |
+| **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients (including possible duplicates), calls with transcripts, logs, and the design docs. |
 | **Automated tests** | Done | 162 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
 
 ### Duplicates: detected, never revealed

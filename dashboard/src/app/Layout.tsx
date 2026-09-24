@@ -29,6 +29,9 @@ export function Layout({ onSignOut }: { onSignOut?: () => void }) {
               <NavLink to="/logs" className={navLinkClass}>
                 Logs
               </NavLink>
+              <NavLink to="/docs" className={navLinkClass}>
+                Docs
+              </NavLink>
             </nav>
           </div>
           {onSignOut && (

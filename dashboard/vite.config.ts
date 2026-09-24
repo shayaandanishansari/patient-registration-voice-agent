@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 
 // `npm run build:backend` uses mode "embedded": the build the FastAPI backend
@@ -22,6 +23,18 @@ export default defineConfig(({ mode }) => {
           "import.meta.env.VITE_API_BASE_URL": JSON.stringify(""),
         }
       : {},
+    // The Docs page imports files from ../docs and the agent export from
+    // ../backend/assets; the dev server may serve those and nothing else outside.
+    server: {
+      fs: {
+        allow: [
+          searchForWorkspaceRoot(process.cwd()),
+          "../docs",
+          "../backend/assets/retell_agent_scripts",
+        ],
+        deny: [".env", ".env.*", "*.{crt,pem}", "**/CONFIDENTIAL/**", "**/archive/**"],
+      },
+    },
     build: embedded
       ? { outDir: "../backend/assets/dashboard", emptyOutDir: true }
       : {},

@@ -59,6 +59,12 @@ phone line this is. Briefly:
 - A caller who describes a medical emergency is told to hang up and call 911 (scope rule
   in the global prompt; there is no opening disclaimer).
 
+Other docs: `docs/design-decisions.md` (the judgment calls, and where the build departs from
+the brief), `docs/api-routes.md` (every route with its auth, kept in step with the app by
+`tests/test_api_routes_doc.py`, so update it when you add or change a route), and
+`docs/System Architecture.svg` (from the `.excalidraw` next to it). `docs/archive/` is
+gitignored drafts.
+
 `docs/patient_field_spec.xlsx` specifies `patient_id` as a UUID, which is the REST resource
 ID. `member_id` (8 random digits) is the voice-facing ID the caller reads back to verify.
 
@@ -125,10 +131,13 @@ dependencies installed. Layered layout:
 ## Dashboard (`dashboard/`)
 
 Vite + React + TS, TanStack Query, React Router, Tailwind. Feature folders (`patients`,
-`calls`, `logs`, `stats`) that never import each other; cross-feature pages
+`calls`, `logs`, `stats`, `docs`) that never import each other; cross-feature pages
 (including the Overview homepage at `/`) are composed in `src/app/routes.tsx`. API types are generated from the backend's OpenAPI
 (`npm run gen:api`). TypeScript is pinned to 6.x because TS 7 lacks the compiler API
-`openapi-typescript` needs. See `dashboard/README.md`.
+`openapi-typescript` needs, which also means `npm install <pkg>` needs `--force`
+(`--legacy-peer-deps` drops `@testing-library/dom` from the lockfile). The Docs page
+(`features/docs`) bundles chosen files from `../docs` and reads the Retell agent export at
+build time, so rebuild after editing either. See `dashboard/README.md`.
 
 The backend also serves the dashboard at `/dashboard` (`app/routers/dashboard.py`)
 from a pre-built copy committed in `backend/assets/dashboard/`, because Railway only

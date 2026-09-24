@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
+import { DocRoute, DocsPage } from "@/features/docs";
 import { LogsPage } from "@/features/logs";
 import { PatientsPage } from "@/features/patients";
 import { clearApiKey, COOKIE_AUTH, ENV_API_KEY, getApiKey, setApiKey } from "@/lib/apiKey";
@@ -22,6 +23,8 @@ function createRouter(onSignOut?: () => void) {
         { path: "calls", element: <CallsRoute /> },
         { path: "calls/:callId", element: <CallRoute /> },
         { path: "logs", element: <LogsPage /> },
+        { path: "docs", element: <DocsPage /> },
+        { path: "docs/:slug", element: <DocRoute /> },
         { path: "*", element: <Navigate to="/" replace /> },
       ],
     },

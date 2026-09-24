@@ -2,10 +2,11 @@
 
 A read-only web UI over the backend's REST API: an overview of headline
 counts, patients (with filters, including possible duplicates), patient
-detail (demographics, insurance, edit history, possible duplicates, calls), calls (transcript, summary, recording), and logs
+detail (demographics, insurance, edit history, possible duplicates, calls), calls (transcript, summary, recording), logs
 (everything Retell sent and the backend did, filterable by time range,
-level, event and call). All writes go through the voice agent or the REST
-API.
+level, event and call), and docs (the design documents, the system
+diagram, and a readable view of the voice agent's prompt and flow). All
+writes go through the voice agent or the REST API.
 
 ## Running it
 
@@ -85,6 +86,7 @@ dashboard/
       calls/
       stats/
       logs/
+      docs/              # catalog.ts lists the ../docs files shown; agentFlow.ts reads the Retell export
     components/          # shared, feature-agnostic UI (Card, Button, Badge, ...)
     lib/                 # API client (envelope unwrapping), API key, formatting
     types/api.d.ts       # generated from the backend's OpenAPI schema

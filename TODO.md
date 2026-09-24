@@ -8,9 +8,9 @@ In order.
 - [x] Persistent event log: every `EventLogger` event also goes to the `logs` collection
       (90-day TTL), readable at `GET /logs`. Best-effort; stdout logging unchanged.
 - [x] `/logs` page on the dashboard: filter by time range, level, event and call.
-- [ ] Docs page on the dashboard with the documents, including the new system diagram.
-      The dashboard page is public: only include docs fine for anyone to read, never
-      anything from `docs/CONFIDENTIAL/`.
+- [x] Docs page on the dashboard with the documents, including the new system diagram.
+      Never anything from `docs/CONFIDENTIAL/` or `docs/archive/`.
+- [ ] Write `docs/approach.md` (it appears on the Docs page once it exists), then rebuild.
 - [ ] Rebuild the served copy (`npm run build:backend` in `dashboard/`) and commit it.
 
 ## 2. Test the security of it all
@@ -26,7 +26,7 @@ In order.
 - [x] Remove features the agent doesn't have (start over, 911 greeting, appointment
       booking in the call). Multi-language turned out to be real and is now documented.
 - [x] Document the event log and `/logs`.
-- [ ] Document the docs page and the system diagram once they exist.
+- [x] Document the docs page and the system diagram once they exist.
 - [x] Fill in the Retell phone number (the `TODO` in `README.md`).
 
 ## 4. Upload the latest agent and test it

@@ -184,6 +184,10 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 | GET | `/docs`, `/redoc`, `/openapi.json` | API docs. The browser asks for a login (any username, the API key as password); `/openapi.json` also takes the header. |
 | GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Needs the key: the browser asks for a login (any username, the API key as password), then a session cookie covers the dashboard's API calls. |
 
+Every route, including the Retell and dashboard ones, with its auth, is listed in
+[`../docs/api-routes.md`](../docs/api-routes.md) (kept in step with the app by
+`tests/test_api_routes_doc.py`).
+
 The Retell routes aren't part of this API: `POST /retell/tools/*` (the four
 tools in the Architecture diagram) and
 `POST /retell/webhook` need Retell's
