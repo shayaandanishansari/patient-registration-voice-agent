@@ -137,3 +137,6 @@ in [`docs/security.md`](docs/security.md).
 - Per-user dashboard auth, and PHI redaction in logs.
 - A real scheduling integration, with reschedule and cancel.
 - Fuzzy matching for names in verification and duplicate detection.
+- In production, ship stdout as JSON to a log platform (Datadog, Grafana Loki)
+  instead of storing logs in the application database, and replace
+  `EventLogger` with structlog.
