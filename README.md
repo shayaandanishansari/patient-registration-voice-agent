@@ -118,7 +118,7 @@ in [`docs/security.md`](docs/security.md).
 | **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. Names in any script register and verify: José, Zoë, Nguyễn, Müller, or अनिल (see [Names](#names-in-any-language) below). |
 | **Call recording / transcript** | Done | Retell's webhook stores the transcript, recording URL and call analysis (summary) on a `calls` document linked to the patient it registered or verified. Visible in `GET /calls` and the dashboard. |
 | **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients (including possible duplicates), calls with transcripts, logs, and the design docs. |
-| **Automated tests** | Done | 170 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
+| **Automated tests** | Done | 174 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
 
 ### Duplicates: detected, never revealed
 
@@ -171,6 +171,9 @@ enforces the same rule (`\p{L}\p{M}`).
   calls after repeated failures. Accents count: a record saved as "José"
   doesn't verify as "Jose".
 - A single shared API key, not per-user auth.
+- Recording links are Retell's signed URLs, which expire after a while, so an
+  older call's "recording" link stops working. Transcripts and summaries are
+  stored as text in MongoDB and aren't affected.
 - The collected payload and transcripts are logged to stdout because the
   brief asks for it, and every log event is also kept in MongoDB's `logs`
   collection for 90 days (`app/core/logger.py`). With real PHI they would be
