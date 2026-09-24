@@ -1,8 +1,8 @@
 # Hospital VoiceAgent — dashboard
 
 A read-only web UI over the backend's REST API: an overview of headline
-counts, patients (with filters), patient detail (demographics, insurance,
-edit history, calls), calls (transcript, summary, recording), and logs
+counts, patients (with filters, including possible duplicates), patient
+detail (demographics, insurance, edit history, possible duplicates, calls), calls (transcript, summary, recording), and logs
 (everything Retell sent and the backend did, filterable by time range,
 level, event and call). All writes go through the voice agent or the REST
 API.
@@ -65,6 +65,12 @@ committed. Re-run it and commit after changing the dashboard. That build:
 
 No Zustand/Redux: the only cross-page state is the API key (sessionStorage)
 and the patient filters, which live in the URL.
+
+**Possible duplicates.** The phone line registers a returning caller who has
+no member ID as a new patient and never mentions the existing record (see the
+root README). Staff find those pairs here: an Overview tile, a "Possible
+duplicates" card on the patient page, and a Patients filter. All three read
+backend endpoints that compute the pairs on request.
 
 ## Structure
 

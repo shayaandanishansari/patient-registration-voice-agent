@@ -289,7 +289,9 @@ stop, and the three closing lines are spoken in the caller's language.
 - **Languages.** The agent is configured for 12 locales (`en-US`, `en-GB`,
   `en-IN`, `es-ES`, `es-419`, `zh-CN`, `fr-FR`, `de-DE`, `hi-IN`, `ru-RU`,
   `it-IT`, `pt-PT`). On "Hablo español" the call continues in Spanish, while
-  tool arguments keep their canonical formats.
+  tool arguments keep their canonical formats. Names in any script are
+  accepted (see Data model), so a Spanish or Hindi speaker's name registers
+  as they spell it.
 
 ## Edge cases
 
@@ -302,6 +304,7 @@ stop, and the three closing lines are spoken in the caller's language.
 | Tool call retried by Retell | `create-patient` is idempotent per call + name + DOB. Updates are naturally idempotent. |
 | Call drops mid-registration | Nothing is written until the caller confirms the read-back, so there are no half-records. The webhook still records the call, its transcript and its `disconnection_reason`. On the next call they start over. |
 | Returning caller registers again | With their member ID they verify and update instead. Without it, a phone + name + DOB match is saved as a new record and never mentioned, because saying so would confirm a record to an unverified caller. Staff see the pair on the dashboard (see the Duplicates decision above). |
+| Accented or non-Latin name (José, Nguyễn, अनिल) | Accepted and stored as spelled. A curly apostrophe (O’Brien) is stored as a straight one, and accents typed as separate marks are merged into their letters, so verification and duplicate checks match either way (`clean_name_text` in `core/validation.py`). |
 | Household sharing one phone | A phone match alone isn't treated as a duplicate: a household member with a different name or DOB registers normally. |
 | Wrong verification details | One generic failure message, then the call ends. Which detail was wrong is never revealed. Soft-deleted patients can't verify. |
 
@@ -366,7 +369,7 @@ python -m pytest -q    # mongomock-motor, no real database needed
   the brief asks for it. That's fine for test data, but production would
   redact it.
 - **Verification uses exact matching** (case-insensitive), with no fuzzy name
-  matching. There's no lockout across calls after repeated failed
+  matching. Accents count: "José" doesn't verify as "Jose". There's no lockout across calls after repeated failed
   verification, and no human escalation path.
 - **No scheduling.** The line handles registration only; callers who ask
   about appointments are sent to the front desk. A mock scheduling backend

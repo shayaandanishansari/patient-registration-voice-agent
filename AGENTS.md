@@ -88,7 +88,9 @@ dependencies installed. Layered layout:
   upgrade), `security.py` (Retell signature, API key, and the browser login + session
   cookie for `/dashboard` and `/docs`; see `docs/security.md`), `errors.py` (envelope error
   handlers: 400/401/404/409/422/500), `pagination.py` (cursor paging), `validation.py`
-  (field normalizers with short speakable error messages), `logger.py` (structured
+  (field normalizers with short speakable error messages; names accept any script and
+  go through `clean_name_text` before storing or comparing, and `db_schema.py`'s name
+  pattern must stay in step with it), `logger.py` (structured
   logging; see below).
 - Logging: modules log through `EventLogger("app.x").info("event_name", **fields)`, not
   bare `logging`. Each event prints one line to stdout (the brief's observability

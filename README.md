@@ -14,7 +14,7 @@ Every record is also available through a REST API and a small web dashboard.
 | **API base URL** | https://patient-registration-voice-agent-production-f401.up.railway.app                                                     |
 | **API docs** | [`/docs`](https://patient-registration-voice-agent-production-f401.up.railway.app/docs) (OpenAPI): the browser asks for a login; any username, the API key as password |
 | **Dashboard** | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): the browser asks for a login; any username, the API key as password |
-| **API key** | Sent separately. Pass it as the `X-API-Key` header. Only `/health` needs none.                |
+| **API key** | Sent separately. Pass it as the `X-API-Key` header. Only `/health` (and a webhook reachability check) need none. |
 
 Things to try on a call:
 - **Register:** answer in any order, correct yourself ("actually it's
@@ -30,6 +30,13 @@ Things to try on a call:
   saying which detail was wrong.
 - **Forgot your member ID:** Sarah won't look it up by name or DOB. She
   suggests visiting in person with a photo ID, or registering a new profile.
+- **Register twice:** register again with the same name, DOB and phone. You
+  get a new member ID and Sarah doesn't mention the first record (see
+  [Duplicates](#duplicates-detected-never-revealed)); the dashboard Overview
+  shows it under "Possible duplicates".
+- **Another language:** say "Hablo español" and continue in Spanish, and
+  spell a name with an accent, like José or Peña. Names in any script are
+  accepted.
 
 Then look at the data:
 
@@ -115,9 +122,9 @@ in [`docs/security.md`](docs/security.md).
 |---|---|---|
 | **Duplicate detection** | Done, without leaking records | A returning caller with their member ID verifies (member ID + full name + DOB) and updates their record instead of creating a new one. A caller who registers again *without* a member ID is detected on phone + name + DOB, but Sarah never tells them; see [Duplicates](#duplicates-detected-never-revealed) below. The dashboard shows these on the Overview ("Possible duplicates") and on each patient, for staff to merge in person. The REST API refuses a duplicate with `409`. |
 | **Appointment scheduling** | Deliberately out of scope | Scheduling is usually a separate line or agent, so Sarah stays a registration and patient-information coordinator. Callers who ask about appointments are sent to the front desk. A tested mock scheduling backend (slots, booking, double-booking protection) is on the [`feature/appointment-scheduling`](https://github.com/shayaandanishansari/patient-registration-voice-agent/tree/feature/appointment-scheduling) branch, left out of `main` to keep the service focused. |
-| **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. |
+| **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. Names in any script register and verify: José, Zoë, Nguyễn, Müller, or अनिल (see [Names](#names-in-any-language) below). |
 | **Call recording / transcript** | Done | Retell's webhook stores the transcript, recording URL and call analysis (summary) on a `calls` document linked to the patient it registered or verified. Visible in `GET /calls` and the dashboard. |
-| **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients, calls with transcripts, and logs. |
+| **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients (including possible duplicates), calls with transcripts, and logs. |
 | **Automated tests** | Done | 162 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
 
 ### Duplicates: detected, never revealed
@@ -149,6 +156,18 @@ So duplicates are handled by channel:
 Phone alone is never a match (households share lines), so a family member
 with a different name or DOB registers normally.
 
+### Names in any language
+
+A line that speaks Spanish, Hindi or Mandarin has to accept the names those
+callers have. Names allow letters and accents in any script (José, Zoë,
+Nguyễn, Müller, Peña, अनिल, 李), plus spaces, hyphens, apostrophes and
+periods. Digits, emoji and other symbols are still rejected, with a message
+Sarah can say. Before a name is stored or compared, it's put in one form:
+an accent typed as a separate mark is merged into its letter, and a curly
+apostrophe (O’Brien) becomes a straight one. So registration, verification
+and duplicate detection all see the same text. The MongoDB schema validator
+enforces the same rule (`\p{L}\p{M}`).
+
 ## Known limitations and trade-offs
 
 - There's no merge action yet: staff can see possible duplicates but merge
@@ -156,7 +175,8 @@ with a different name or DOB registers normally.
 - The call flow was designed and tested mostly in English. Other languages
   rely on the model's translation of the same prompts.
 - Verification is exact match (case-insensitive), with no lockout across
-  calls after repeated failures.
+  calls after repeated failures. Accents count: a record saved as "José"
+  doesn't verify as "Jose".
 - A single shared API key, not per-user auth.
 - The collected payload and transcripts are logged to stdout because the
   brief asks for it, and every log event is also kept in MongoDB's `logs`
