@@ -124,7 +124,7 @@ Vite + React + TS, TanStack Query, React Router, Tailwind. Feature folders (`pat
 `calls`, `logs`, `stats`) that never import each other; cross-feature pages
 (including the Overview homepage at `/`) are composed in `src/app/routes.tsx`. API types are generated from the backend's OpenAPI
 (`npm run gen:api`). TypeScript is pinned to 6.x because TS 7 lacks the compiler API
-`openapi-typescript` needs. See `dashboard/ARCHITECTURE.md`.
+`openapi-typescript` needs. See `dashboard/README.md`.
 
 The backend also serves the dashboard at `/dashboard` (`app/routers/dashboard.py`)
 from a pre-built copy committed in `backend/assets/dashboard/`, because Railway only

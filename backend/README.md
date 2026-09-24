@@ -39,17 +39,15 @@ REST API: /patients (CRUD), /calls, /logs, /stats, /health
 A fifth endpoint, `check-existing-patient`, runs the duplicate check on its
 own. It's tested but not called by the current flow.
 
-**Separation of concerns.** Retell owns telephony, speech and the LLM, and
-the conversation flow decides *what to say*. The backend decides *what is
-true*: every value is validated and normalized server-side, whichever channel
-it came from. The voice tools and the REST API both go through
-`services/patients.py` and the same `PatientCreate`/`PatientUpdate` models, so
-there is exactly one implementation of the data rules.
+## Architecture decisions
 
-**Why these choices.**
+**Stack.**
 - *Retell AI* — gives us a real phone number, low-latency speech, and a
   node-based conversation flow in one platform. That lets the 3 hours go into
   the prompt, the tools and the backend, not into audio plumbing.
+- *Claude Sonnet 5 (through Retell)* — strong instruction-following and tool
+  calling at conversational latency, which matters for the spelling,
+  read-back and security rules.
 - *FastAPI + Pydantic* — async (tool calls must answer in well under 2s),
   declarative validation, and free OpenAPI docs at `/docs` (the dashboard
   generates its TypeScript types from them).
@@ -58,6 +56,59 @@ there is exactly one implementation of the data rules.
   rules are enforced by a `$jsonSchema` validator (see Data model).
 - *Railway* — deploys from GitHub with a health check, with zero infra to
   manage.
+
+**The flow decides what to say; the backend decides what is true.** Retell
+owns telephony, speech and the LLM. Every value is validated and normalized
+server-side, whichever channel it came from. The voice tools and the REST API
+both go through `services/patients.py` and the same
+`PatientCreate`/`PatientUpdate` models, so there is exactly one
+implementation of the data rules.
+
+**Layers.** `routers/` only speaks HTTP, `services/` holds the business
+logic, `models/` the Pydantic request/response shapes, and `core/` the
+shared infrastructure (config, database, security, errors, validation,
+logging, pagination, migrations). Every write and every patient rule goes
+through a service function, whichever endpoint calls it. Read-only lists
+and stats query the collections directly, since there's no rule to share.
+
+**Identity is bound to the call, not to the model.** Verification records
+the patient against Retell's `call_id` on the server. `get-patient` and
+`update-patient` look the patient up from that, and no tool takes a patient
+ID from the LLM. A confused or prompt-injected model can't reach another
+record.
+
+**Two IDs.** `patient_id` is a UUID, the REST resource ID from the field
+spec. `member_id` is 8 random digits, because a caller has to read it back
+over the phone.
+
+**Tool responses are shaped for the flow.** Tools answer HTTP 200 with a
+small `status` the flow branches on (`created`, `invalid`, `verified`, ...)
+and a `message` the agent can say as-is. A real failure is an HTTP 500,
+which sends the flow to its else-edge and a spoken apology, never silence.
+
+**Safe to retry.** `create-patient` is idempotent per call + name + DOB, so
+a Retell retry returns the same record instead of a second one. Updates are
+naturally idempotent, and the webhook upserts by `call_id`.
+
+**Nothing is lost.** Patients are soft-deleted (`deleted_at`), and every
+update appends to `update_history` (which fields, from which call, when).
+
+**Lists page by cursor**, not offset: the cursor is the last document's
+`_id`, so pages stay stable while calls keep adding records.
+
+**Everything needs a credential.** Every route except `/health` and the
+webhook reachability probe needs the API key or a Retell HMAC signature,
+and `tests/test_security.py` sweeps all routes to enforce it. Details in
+[`../docs/security.md`](../docs/security.md).
+
+**Logs go to stdout and to MongoDB.** Stdout is Railway's log view; the
+`logs` collection makes them searchable from `GET /logs` and the dashboard
+without another service (see Observability). In production they would go
+to a log platform instead.
+
+**The dashboard is served by the backend.** Railway builds only Python, so
+the dashboard's production build is committed in `assets/dashboard/` and
+served at `/dashboard`, behind the same key.
 
 ## Data model
 
