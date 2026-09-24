@@ -4,9 +4,10 @@ The webhook now stores Retell's call_cost on each call; calls from before that
 change don't have it. This fetches each one from Retell's API and $sets only
 call_cost, so nothing else on the call changes. Safe to re-run.
 
-Run from backend/ (it reads backend/.env):
-    python ../playground/retell_api/backfill_call_costs.py          # dry run
-    python ../playground/retell_api/backfill_call_costs.py --write
+Run from backend/ (it reads backend/.env). The local .env points at the dev
+database, so name production's explicitly (PowerShell: $env:MONGODB_DB=...):
+    MONGODB_DB=patient_registration python ../playground/retell_api/backfill_call_costs.py
+    MONGODB_DB=patient_registration python ../playground/retell_api/backfill_call_costs.py --write
 """
 
 import asyncio

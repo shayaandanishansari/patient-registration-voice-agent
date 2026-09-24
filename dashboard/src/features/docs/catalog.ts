@@ -10,7 +10,9 @@ const MARKDOWN = import.meta.glob<string>(
 const FILES = import.meta.glob<string>(
   [
     "../../../../docs/identity-voiceagent.html",
+    "../../../../docs/agent-flow.html",
     "../../../../docs/System Architecture.svg",
+    "../../../../docs/Brainstorm.png",
     "../../../../docs/patient_field_spec.xlsx",
   ],
   { query: "?url", import: "default", eager: true },
@@ -50,6 +52,17 @@ export type Doc = MarkdownDoc | FileDoc | AgentDoc;
 
 type Entry = Omit<MarkdownDoc, "markdown"> | Omit<FileDoc, "url"> | AgentDoc;
 
+// Screenshots for the cards, made by `npm run thumbnails`, named by slug.
+const THUMBNAILS = import.meta.glob<string>("./thumbnails/*.jpg", {
+  query: "?url",
+  import: "default",
+  eager: true,
+});
+
+export function thumbnailFor(slug: string): string | undefined {
+  return THUMBNAILS[`./thumbnails/${slug}.jpg`];
+}
+
 // Display order. An entry whose file doesn't exist yet is left out.
 const ENTRIES: Entry[] = [
   {
@@ -68,6 +81,13 @@ const ENTRIES: Entry[] = [
       "The forks in the road: where the brief left a choice open or would have caused a problem, what was chosen, and what it costs.",
   },
   {
+    slug: "brainstorm",
+    file: "Brainstorm.png",
+    kind: "diagram",
+    title: "Brainstorm",
+    description: "The first sketch: the system's parts, the agent's role, and the call flow before any code.",
+  },
+  {
     slug: "identity",
     file: "identity-voiceagent.html",
     kind: "page",
@@ -83,11 +103,19 @@ const ENTRIES: Entry[] = [
     description: "The caller, Retell, the backend, MongoDB and the dashboard, and how they talk.",
   },
   {
+    slug: "agent-flow",
+    file: "agent-flow.html",
+    kind: "page",
+    title: "Voice agent flow",
+    description:
+      "The conversation flow as a diagram: registration along the top, returning callers below, and what each step branches on.",
+  },
+  {
     slug: "agent",
     kind: "agent",
-    title: "Voice agent prompt and flow",
+    title: "Voice agent prompts",
     description:
-      "The global prompt, every node's instructions, where each one branches, and the four tools, read from the Retell agent export.",
+      "The global prompt, every step's instructions, where each one branches, and the four tools, read from the Retell agent export.",
   },
   {
     slug: "api-routes",

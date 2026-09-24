@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice agent flow</title>
+<style>
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1e293b; background: #f8fafc; }
+  header { max-width: 1100px; margin: 0 auto; padding: 28px 20px 8px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p { margin: 0 0 10px; color: #475569; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #475569; }
+  .legend i { display: inline-block; width: 14px; height: 14px; border: 1.5px solid; border-radius: 4px; margin-right: 6px; vertical-align: -2px; }
+  .canvas { padding: 8px 20px 32px; }
+  svg { display: block; width: 100%; max-width: 1945px; height: auto; margin: 0 auto; }
+  .node rect { stroke-width: 1.5; }
+  .node .name { font-weight: 600; font-size: 15px; fill: #0f172a; }
+  .node .sub { font-size: 12.5px; font-family: ui-monospace, Consolas, monospace; }
+  .edge { fill: none; stroke: #64748b; stroke-width: 1.6; }
+  .label text { font-size: 12.5px; fill: #334155; text-anchor: middle; dominant-baseline: middle;
+    paint-order: stroke; stroke: #f8fafc; stroke-width: 5px; stroke-linejoin: round; }
+  .node:hover rect { stroke-width: 3; }
+  .edge:hover { stroke: #0f7667; stroke-width: 3; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Voice agent flow</h1>
+  <p>The Retell conversation flow Sarah follows: registering a new patient along the top,
+  returning callers along the bottom. The global prompt (identity, voice style, scope and
+  security rules) applies in every step. Hover a step for its instruction, or an arrow for
+  its full condition. Generated from <code>agent.json</code>.</p>
+  <div class="legend"><span><i style="background:#e6f5f2;border-color:#0f7667"></i>Conversation</span><span><i style="background:#fff4e0;border-color:#b26a00"></i>Tool call</span><span><i style="background:#efeafd;border-color:#5b3fc4"></i>Subagent (tools)</span><span><i style="background:#f1f5f9;border-color:#475569"></i>Ends the call</span><span>Every conversation step also goes to <b>End Call</b> when the caller is done (not drawn).</span></div>
+</header>
+<div class="canvas">
+<svg viewBox="0 0 1945 929" role="img" aria-label="Voice agent conversation flow">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<path class="edge" d="M325,382.0 C387.5,382.0 387.5,142.0 450,142.0" marker-end="url(#arrow)"><title>Agent Introduction → Register: Collect Details: Caller wants to register as a new patient</title></path>
+<path class="edge" d="M325,382.0 C387.5,382.0 387.5,622.0 450,622.0" marker-end="url(#arrow)"><title>Agent Introduction → Existing: Collect Verification: Caller wants to check, confirm or update an existing registration</title></path>
+<path class="edge" d="M325,382.0 C387.5,382.0 387.5,462.0 450,462.0" marker-end="url(#arrow)"><title>Agent Introduction → Existing: Forgot Member ID: Caller says they are already registered but do not have, forgot, or cannot find their member ID</title></path>
+<path class="edge" d="M715,142.0 C777.5,142.0 777.5,142.0 840,142.0" marker-end="url(#arrow)"><title>Register: Collect Details → Register: Save Patient: Caller has confirmed the full summary of registration details is correct, after you spelled their first and last name back letter by letter</title></path>
+<path class="edge" d="M1105,142.0 C1167.5,142.0 1167.5,142.0 1230,142.0" marker-end="url(#arrow)"><title>Register: Save Patient → Register: Success: create_status == created</title></path>
+<path class="edge" d="M942.5,184 L942.5,260" marker-end="url(#arrow)"><title>Register: Save Patient → Register: Fix Invalid Detail: create_status == invalid</title></path>
+<path class="edge" d="M1105,142.0 C1167.5,142.0 1167.5,302.0 1230,302.0" marker-end="url(#arrow)"><title>Register: Save Patient → System Error: Else</title></path>
+<path class="edge" d="M1002.5,260 L1002.5,184" marker-end="url(#arrow)"><title>Register: Fix Invalid Detail → Register: Save Patient: Caller has confirmed the corrected detail</title></path>
+<path class="edge" d="M1362.5,100 C1362.5,45 582.5,45 582.5,100" marker-end="url(#arrow)"><title>Register: Success → Register: Collect Details: Caller wants to register another person</title></path>
+<path class="edge" d="M1495,142.0 L1513,142.0 Q1525,142.0 1525,154.0 L1525,857 Q1525,869 1513,869 L634.5,869 Q622.5,869 622.5,857 L622.5,664" marker-end="url(#arrow)"><title>Register: Success → Existing: Collect Verification: Caller wants to check or update an existing registration</title></path>
+<path class="edge" d="M715,622.0 C777.5,622.0 777.5,622.0 840,622.0" marker-end="url(#arrow)"><title>Existing: Collect Verification → Existing: Check Information: Caller has given member ID, full name and date of birth, you read them back with the first and last name spelled letter by letter, and the caller confirmed</title></path>
+<path class="edge" d="M582.5,580 L582.5,504" marker-end="url(#arrow)"><title>Existing: Collect Verification → Existing: Forgot Member ID: Caller says they do not have, forgot, or cannot find their member ID</title></path>
+<path class="edge" d="M1105,622.0 C1167.5,622.0 1167.5,622.0 1230,622.0" marker-end="url(#arrow)"><title>Existing: Check Information → Existing: Check or Update (verified): verification_result == verified</title></path>
+<path class="edge" d="M972.5,664 L972.5,740" marker-end="url(#arrow)"><title>Existing: Check Information → Deny: End Call for Security: Else</title></path>
+<path class="edge" d="M582.5,420 L582.5,184" marker-end="url(#arrow)"><title>Existing: Forgot Member ID → Register: Collect Details: Caller wants to register a new profile</title></path>
+<g class="node"><title>Greet the caller with exactly this, then wait: &quot;Hi, this is Sarah, the patient registration assistant at {{hospital_name}}. I can help you register as a new patient, or check or update an existing registration. Which would you like?&quot; If the caller asks about something outside registration, handle it as described in your scope rules, then repeat the two options.</title><rect x="60" y="340.0" width="265" height="84" rx="12" fill="#e6f5f2" stroke="#0f7667"/><text class="name" x="74" y="370.0">Agent Introduction</text><text class="sub" x="74" y="390.0" fill="#0f7667">Conversation · start</text></g>
+<g class="node"><title>Collect the details for a new patient registration, a few at a time.
+Required: first name and last name (ask the caller to spell both, then immediately spell both back letter by letter, saying each letter separately (for example &quot;S, M, I, T, H&quot;) and get a clear yes before asking for anything else), date of birth, sex (male, female, other, or they can decline to answer), phone number (offer to use the number they are calling from, {{user_number}}), street address, city, state and ZIP code.
+Optional: apartment or unit, and email address. After the required details, say: &quot;I can also collect your insurance information, emergency contact, and preferred language. Would you like to provide any of those?&quot; and collect only the ones they want: insurance company and member ID, emergency contact name and phone number, preferred language.
+If the caller refuses a required detail, explain that it is needed to register and that they can also register in person.
+When you have everything, read back one full summary and ask if it is all correct. In the summary, spell the first and last name letter by letter, saying each letter separately (for example &quot;S, M, I, T, H&quot;), and spell an emergency contact&#x27;s name and an email address the same way. If they correct something, update it and read back only the corrected part. Only continue once they clearly confirm.</title><rect x="450" y="100" width="265" height="84" rx="12" fill="#e6f5f2" stroke="#0f7667"/><text class="name" x="464" y="130">Register: Collect Details</text><text class="sub" x="464" y="150" fill="#0f7667">Conversation</text></g>
+<g class="node"><title>Briefly tell the caller you&#x27;re saving their registration now and it will just take a moment.</title><rect x="840" y="100" width="265" height="84" rx="12" fill="#fff4e0" stroke="#b26a00"/><text class="name" x="854" y="130">Register: Save Patient</text><text class="sub" x="854" y="150" fill="#b26a00">create_patient</text></g>
+<g class="node"><title>The system could not save the registration because: {{create_message}}. Explain this simply, ask the caller for only the detail that needs fixing, read the corrected value back (spell a name or email letter by letter, saying each letter separately (for example &quot;S, M, I, T, H&quot;)) and get confirmation.</title><rect x="840" y="260" width="265" height="84" rx="12" fill="#e6f5f2" stroke="#0f7667"/><text class="name" x="854" y="290">Register: Fix Invalid Detail</text><text class="sub" x="854" y="310" fill="#0f7667">Conversation</text></g>
+<g class="node"><title>Tell the caller their registration is complete. Their member ID is {{member_id}}. Read it slowly in small groups of digits, offer to repeat it, and suggest they write it down because they will need it to check or update their details. Then ask if there is anything else you can help with.</title><rect x="1230" y="100" width="265" height="84" rx="12" fill="#e6f5f2" stroke="#0f7667"/><text class="name" x="1244" y="130">Register: Success</text><text class="sub" x="1244" y="150" fill="#0f7667">Conversation</text></g>
+<g class="node"><title>The caller wants to check or update an existing registration. Explain that to protect their information you need three things: their member ID, full name, and date of birth. Collect all three, and ask the caller to spell their first and last name. Then read back all three, only to make sure you heard them correctly: the member ID digit by digit, the first and last name letter by letter (say each letter separately, for example &quot;S, M, I, T, H&quot;, and spell the whole name, never just part of it), and the date of birth in spoken form. If the caller corrects anything, read back the corrected detail the same way. Do not say or hint whether anything matches the records. If the caller says they do not have or forgot their member ID, do not try to find it.</title><rect x="450" y="580" width="265" height="84" rx="12" fill="#e6f5f2" stroke="#0f7667"/><text class="name" x="464" y="610">Existing: Collect Verification</text><text class="sub" x="464" y="630" fill="#0f7667">Conversation</text></g>
+<g class="node"><title>Briefly tell the caller you&#x27;re checking their details now.</title><rect x="840" y="580" width="265" height="84" rx="12" fill="#fff4e0" stroke="#b26a00"/><text class="name" x="854" y="610">Existing: Check Information</text><text class="sub" x="854" y="630" fill="#b26a00">verify_patient</text></g>
+<g class="node"><title>Explain that for security reasons you cannot look up a member ID over the phone. Offer two options: visit their nearest {{hospital_name}} location with a photo ID to retrieve it, or register a new patient profile now so they can continue with their care, and any duplicate can be merged when they visit in person. Ask which they prefer.</title><rect x="450" y="420" width="265" height="84" rx="12" fill="#e6f5f2" stroke="#0f7667"/><text class="name" x="464" y="450">Existing: Forgot Member ID</text><text class="sub" x="464" y="470" fill="#0f7667">Conversation</text></g>
+<g class="node"><title>The caller is now verified. Tell them so briefly, then help them with their own record until they are done.
+- Call get_patient_profile when they want to hear their details, or before changing something if you do not already have the current value. Only read out what they ask about, unless they ask for everything.
+- They can update: phone, email, street address, apartment or unit, city, state and ZIP code.
+- Name and date of birth are read-only. If asked, explain they must visit in person with a photo ID to change them.
+- Before calling update_patient_profile, read back exactly what will change and get a clear yes. Only send the fields that are changing.
+- If the system returns a problem with a value, explain it simply and ask for a corrected value.
+- After each request, ask if there is anything else they would like to check or update.
+- When the caller has nothing else, don&#x27;t say goodbye yourself; the closing message is said next.</title><rect x="1230" y="580" width="265" height="84" rx="12" fill="#efeafd" stroke="#5b3fc4"/><text class="name" x="1244" y="610">Existing: Check or Update (verified)</text><text class="sub" x="1244" y="630" fill="#5b3fc4">get_patient_profile</text><text class="sub" x="1244" y="647" fill="#5b3fc4">update_patient_profile</text></g>
+<g class="node"><title>Say this closing line now, translated into the language of the call if it isn&#x27;t English: &quot;I&#x27;m sorry, I wasn&#x27;t able to verify those details, so for security reasons I&#x27;m going to end this call. Please check your member ID and try calling again, or visit your nearest {{hospital_name}} location with a photo ID. Goodbye.&quot; Always say it in full, even if you already said goodbye earlier.</title><rect x="840" y="740" width="265" height="84" rx="12" fill="#f1f5f9" stroke="#475569"/><text class="name" x="854" y="770">Deny: End Call for Security</text><text class="sub" x="854" y="790" fill="#475569">Ends the call</text></g>
+<g class="node"><title>Say this closing line now, translated into the language of the call if it isn&#x27;t English: &quot;I&#x27;m sorry, I&#x27;m having trouble saving your information right now. Please try calling again in a little while, or visit your nearest {{hospital_name}} location. Goodbye.&quot; Always say it in full, even if you already said goodbye earlier.</title><rect x="1230" y="260" width="265" height="84" rx="12" fill="#f1f5f9" stroke="#475569"/><text class="name" x="1244" y="290">System Error</text><text class="sub" x="1244" y="310" fill="#475569">Ends the call</text></g>
+<g class="node"><title>Say this closing line now, translated into the language of the call if it isn&#x27;t English: &quot;Thank you for calling {{hospital_name}}. Have a great day. Goodbye.&quot; Always say it in full, even if you already said goodbye earlier.</title><rect x="1620" y="340.0" width="265" height="84" rx="12" fill="#f1f5f9" stroke="#475569"/><text class="name" x="1634" y="370.0">End Call</text><text class="sub" x="1634" y="390.0" fill="#475569">Ends the call</text></g>
+<g class="label"><title>Agent Introduction → Register: Collect Details: Caller wants to register as a new patient</title><text x="388" y="252">new patient</text></g>
+<g class="label"><title>Agent Introduction → Existing: Collect Verification: Caller wants to check, confirm or update an existing registration</title><text x="388" y="492">check or update</text></g>
+<g class="label"><title>Agent Introduction → Existing: Forgot Member ID: Caller says they are already registered but do not have, forgot, or cannot find their member ID</title><text x="388" y="412">forgot member ID</text></g>
+<g class="label"><title>Register: Collect Details → Register: Save Patient: Caller has confirmed the full summary of registration details is correct, after you spelled their first and last name back letter by letter</title><text x="778" y="132">summary confirmed</text></g>
+<g class="label"><title>Register: Save Patient → Register: Success: create_status == created</title><text x="1168" y="132">created</text></g>
+<g class="label"><title>Register: Save Patient → Register: Fix Invalid Detail: create_status == invalid</title><text x="942" y="222">invalid</text></g>
+<g class="label"><title>Register: Save Patient → System Error: Else</title><text x="1168" y="212">otherwise</text></g>
+<g class="label"><title>Register: Fix Invalid Detail → Register: Save Patient: Caller has confirmed the corrected detail</title><text x="1002" y="222">fix confirmed</text></g>
+<g class="label"><title>Register: Success → Register: Collect Details: Caller wants to register another person</title><text x="972" y="58">register another</text></g>
+<g class="label"><title>Register: Success → Existing: Collect Verification: Caller wants to check or update an existing registration</title><text x="1074" y="859">check or update</text></g>
+<g class="label"><title>Existing: Collect Verification → Existing: Check Information: Caller has given member ID, full name and date of birth, you read them back with the first and last name spelled letter by letter, and the caller confirmed</title><text x="778" y="612">details confirmed</text></g>
+<g class="label"><title>Existing: Collect Verification → Existing: Forgot Member ID: Caller says they do not have, forgot, or cannot find their member ID</title><text x="582" y="542">forgot member ID</text></g>
+<g class="label"><title>Existing: Check Information → Existing: Check or Update (verified): verification_result == verified</title><text x="1168" y="612">verified</text></g>
+<g class="label"><title>Existing: Check Information → Deny: End Call for Security: Else</title><text x="972" y="702">otherwise</text></g>
+<g class="label"><title>Existing: Forgot Member ID → Register: Collect Details: Caller wants to register a new profile</title><text x="582" y="302">register new</text></g>
+</svg>
+</div>
+</body>
+</html>

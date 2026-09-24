@@ -47,7 +47,7 @@ function DiagramView({ doc }: { doc: FileDoc }) {
         </a>
       }
     >
-      <img src={doc.url} alt={doc.title} className="w-full rounded-lg bg-[#121212]" />
+      <img src={doc.url} alt={doc.title} className="w-full rounded-lg" />
     </Card>
   );
 }

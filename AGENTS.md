@@ -62,7 +62,9 @@ phone line this is. Briefly:
 Other docs: `docs/design-decisions.md` (the judgment calls, and where the build departs from
 the brief), `docs/api-routes.md` (every route with its auth, kept in step with the app by
 `tests/test_api_routes_doc.py`, so update it when you add or change a route), and
-`docs/System Architecture.svg` (from the `.excalidraw` next to it). `docs/archive/` is
+`docs/System Architecture.svg` (from the `.excalidraw` next to it), and `docs/agent-flow.html`
+(drawn from `agent.json`: after editing the agent, run `python scripts/render_agent_flow.py`
+from `backend/`; `tests/test_agent_flow_doc.py` fails until you do). `docs/archive/` is
 gitignored drafts.
 
 `docs/patient_field_spec.xlsx` specifies `patient_id` as a UUID, which is the REST resource
@@ -137,7 +139,8 @@ Vite + React + TS, TanStack Query, React Router, Tailwind. Feature folders (`pat
 `openapi-typescript` needs, which also means `npm install <pkg>` needs `--force`
 (`--legacy-peer-deps` drops `@testing-library/dom` from the lockfile). The Docs page
 (`features/docs`) bundles chosen files from `../docs` and reads the Retell agent export at
-build time, so rebuild after editing either. See `dashboard/README.md`.
+build time, so rebuild after editing either. Its cards show screenshots from
+`npm run thumbnails` (Playwright), which you rerun when a document changes. See `dashboard/README.md`.
 
 The backend also serves the dashboard at `/dashboard` (`app/routers/dashboard.py`)
 from a pre-built copy committed in `backend/assets/dashboard/`, because Railway only

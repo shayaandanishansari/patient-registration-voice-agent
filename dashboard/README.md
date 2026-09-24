@@ -33,6 +33,7 @@ The backend must allow the dashboard's origin in `CORS_ORIGINS`
 | `npm run build` | Typecheck + standalone production build to `dist/` |
 | `npm run build:backend` | Build the copy the backend serves at `/dashboard`, into `backend/assets/dashboard/`. Commit the result. |
 | `npm test` | Vitest |
+| `npm run thumbnails` | Screenshot each document for its card on the Docs page (Playwright; starts its own dev server). Re-run after changing a doc. |
 | `npm run gen:api` | Regenerate `src/types/api.d.ts` from the backend's `/openapi.json`. Needs the backend's key in `API_KEY` (PowerShell: `$env:API_KEY="..."`); `redocly.yaml` sends it. |
 
 ## Served by the backend

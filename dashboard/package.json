@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "gen:api": "openapi-typescript https://patient-registration-voice-agent-production-f401.up.railway.app/openapi.json -o src/types/api.d.ts"
+    "gen:api": "openapi-typescript https://patient-registration-voice-agent-production-f401.up.railway.app/openapi.json -o src/types/api.d.ts",
+    "thumbnails": "node scripts/thumbnails.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.103.2",
@@ -30,6 +31,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^29.1.1",
     "openapi-typescript": "^7.13.0",
+    "playwright": "^1.63.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",

@@ -69,7 +69,7 @@ export function AgentFlowDoc() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Voice agent prompt and flow</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Voice agent prompts</h1>
         <p className="text-sm text-slate-500">
           Read from <code>backend/assets/retell_agent_scripts/agent.json</code>, the Retell export
           the live agent is imported from.
