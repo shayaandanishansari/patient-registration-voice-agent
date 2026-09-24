@@ -391,7 +391,7 @@
         "type": "subagent",
         "instruction": {
           "type": "prompt",
-          "text": "The caller is now verified. Tell them so briefly, then help them with their own record until they are done.\n- Call get_patient_profile when they want to hear their details, or before changing something if you do not already have the current value. Only read out what they ask about, unless they ask for everything.\n- They can update: phone, email, street address, apartment or unit, city, state and ZIP code.\n- Name and date of birth are read-only. If asked, explain they must visit in person with a photo ID to change them.\n- Before calling update_patient_profile, read back exactly what will change and get a clear yes. Only send the fields that are changing.\n- If the system returns a problem with a value, explain it simply and ask for a corrected value.\n- After each request, ask if there is anything else they would like to check or update."
+          "text": "The caller is now verified. Tell them so briefly, then help them with their own record until they are done.\n- Call get_patient_profile when they want to hear their details, or before changing something if you do not already have the current value. Only read out what they ask about, unless they ask for everything.\n- They can update: phone, email, street address, apartment or unit, city, state and ZIP code.\n- Name and date of birth are read-only. If asked, explain they must visit in person with a photo ID to change them.\n- Before calling update_patient_profile, read back exactly what will change and get a clear yes. Only send the fields that are changing.\n- If the system returns a problem with a value, explain it simply and ask for a corrected value.\n- After each request, ask if there is anything else they would like to check or update.\n- When the caller has nothing else, don't say goodbye yourself; the closing message is said next."
         },
         "skippable": false,
         "name": "Existing: Check or Update (verified)",
@@ -410,7 +410,7 @@
         "skippable": false,
         "type": "end",
         "instruction": {
-          "text": "Continue in the language you were speaking \"I'm sorry, I wasn't able to verify those details, so for security reasons I'm going to end this call. Please check your member ID and try calling again, or visit your nearest {{hospital_name}} location with a photo ID. Goodbye.\"",
+          "text": "Say this closing line now, translated into the language of the call if it isn't English: \"I'm sorry, I wasn't able to verify those details, so for security reasons I'm going to end this call. Please check your member ID and try calling again, or visit your nearest {{hospital_name}} location with a photo ID. Goodbye.\" Always say it in full, even if you already said goodbye earlier.",
           "type": "prompt"
         },
         "display_position": {
@@ -433,7 +433,7 @@
         "type": "end",
         "instruction": {
           "type": "prompt",
-          "text": "Continue in the language you were speaking \"I'm sorry, I'm having trouble saving your information right now. Please try calling again in a little while, or visit your nearest {{hospital_name}} location. Goodbye.\""
+          "text": "Say this closing line now, translated into the language of the call if it isn't English: \"I'm sorry, I'm having trouble saving your information right now. Please try calling again in a little while, or visit your nearest {{hospital_name}} location. Goodbye.\" Always say it in full, even if you already said goodbye earlier."
         }
       },
       {
@@ -443,7 +443,7 @@
         "id": "end_goodbye",
         "instruction": {
           "type": "prompt",
-          "text": "Continue in the language you were speaking \"Thank you for calling {{hospital_name}}. Have a great day. Goodbye.\""
+          "text": "Say this closing line now, translated into the language of the call if it isn't English: \"Thank you for calling {{hospital_name}}. Have a great day. Goodbye.\" Always say it in full, even if you already said goodbye earlier."
         },
         "name": "End Call",
         "display_position": {
@@ -671,7 +671,7 @@
     },
     "model_temperature": 0.3,
     "default_dynamic_variables": {
-      "hospital_name": "Meridian Valley Medical Center"
+      "hospital_name": "Hospital XYZ"
     },
     "knowledge_base_ids": [],
     "kb_config": {
