@@ -27,3 +27,8 @@ export function formatDuration(ms: number | null | undefined): string {
 export function dash(value: string | null | undefined): string {
   return value ? value : "—";
 }
+
+/** For optional fields the caller may simply not have given. */
+export function optional(value: string | null | undefined): string {
+  return value ? value : "Not provided";
+}

@@ -18,6 +18,7 @@ from app.core.migrations import migrate_legacy_records
 from app.routers import (
     appointments,
     calls,
+    dashboard,
     health,
     patients,
     retell_tools,
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(retell_tools.router)
     app.include_router(retell_webhook.probe_router)
     app.include_router(retell_webhook.router)
+    app.include_router(dashboard.router)
 
     return app
 

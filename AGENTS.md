@@ -101,3 +101,9 @@ Vite + React + TS, TanStack Query, React Router, Tailwind. Feature folders (`pat
 in `src/app/routes.tsx`. API types are generated from the backend's OpenAPI
 (`npm run gen:api`). TypeScript is pinned to 6.x because TS 7 lacks the compiler API
 `openapi-typescript` needs. See `dashboard/ARCHITECTURE.md`.
+
+The backend also serves the dashboard at `/dashboard` (`app/routers/dashboard.py`)
+from a pre-built copy committed in `backend/assets/dashboard/`, because Railway only
+builds Python. After changing the dashboard, run `npm run build:backend` in
+`dashboard/` and commit the output. That build mode blanks `VITE_API_KEY`, so a local
+key never ships in the public bundle.

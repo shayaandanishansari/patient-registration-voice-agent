@@ -1,7 +1,7 @@
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
 import { DescriptionList } from "@/components/DescriptionList";
-import { dash, formatDateTime, formatDob, formatPhone } from "@/lib/format";
+import { dash, formatDateTime, formatDob, formatPhone, optional } from "@/lib/format";
 
 import type { Patient } from "../types";
 
@@ -25,7 +25,7 @@ export function PatientProfile({ patient: p }: { patient: Patient }) {
               ["Date of birth", formatDob(p.date_of_birth)],
               ["Sex", p.sex],
               ["Phone", formatPhone(p.phone_number)],
-              ["Email", dash(p.email)],
+              ["Email", optional(p.email)],
               ["Preferred language", p.preferred_language ?? "English"],
               ["Address", `${address}, ${p.city}, ${p.state} ${p.zip_code}`],
             ]}
@@ -35,10 +35,13 @@ export function PatientProfile({ patient: p }: { patient: Patient }) {
         <Card title="Insurance & emergency contact">
           <DescriptionList
             items={[
-              ["Insurance provider", dash(p.insurance_provider)],
-              ["Insurance member ID", dash(p.insurance_member_id)],
-              ["Emergency contact", dash(p.emergency_contact_name)],
-              ["Emergency phone", formatPhone(p.emergency_contact_phone)],
+              ["Insurance provider", optional(p.insurance_provider)],
+              ["Insurance member ID", optional(p.insurance_member_id)],
+              ["Emergency contact", optional(p.emergency_contact_name)],
+              [
+                "Emergency contact phone",
+                p.emergency_contact_phone ? formatPhone(p.emergency_contact_phone) : "Not provided",
+              ],
             ]}
           />
         </Card>

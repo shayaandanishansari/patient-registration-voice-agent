@@ -118,6 +118,7 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 | GET | `/calls`, `/calls/{call_id}` | `?patient_id=` lists the calls that registered or verified a patient |
 | GET | `/appointments` | `?patient_id=` |
 | GET | `/health` | No auth. Checks the database connection. |
+| GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). The page is public; the data it loads needs the key. |
 
 Status codes: `200` OK, `201` created, `400` malformed request (bad JSON,
 bad query parameter, bad cursor, non-UUID ID, empty update), `401` missing

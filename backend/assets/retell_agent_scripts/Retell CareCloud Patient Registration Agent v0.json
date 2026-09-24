@@ -1,0 +1,684 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1790206532803,
+  "agent_name": "CareCloud Patient Registration Agent",
+  "response_engine": {
+    "type": "conversation-flow",
+    "conversation_flow_id": "conversation_flow_2e02ab8e3a56",
+    "version": 0
+  },
+  "language": [
+    "en-US",
+    "es-ES",
+    "es-419",
+    "en-GB",
+    "en-IN",
+    "zh-CN",
+    "fr-FR",
+    "de-DE",
+    "hi-IN",
+    "ru-RU",
+    "it-IT",
+    "pt-PT"
+  ],
+  "data_storage_setting": "everything",
+  "contact_memory_config": {
+    "enable_update": false,
+    "enable_read": true
+  },
+  "opt_in_signed_url": false,
+  "version": 0,
+  "assigned_tags": [],
+  "is_published": false,
+  "post_call_analysis_model": "gpt-5.6-terra",
+  "pii_config": {
+    "mode": "post_call",
+    "categories": []
+  },
+  "voice_id": "retell-Marissa",
+  "fallback_voice_ids": [],
+  "voice_temperature": 1,
+  "voice_speed": 1,
+  "volume": 1,
+  "enable_expressive_mode": false,
+  "max_call_duration_ms": 3600000,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+  "conversationFlow": {
+    "conversation_flow_id": "conversation_flow_2e02ab8e3a56",
+    "version": 0,
+    "last_modification_timestamp": 1790207911742,
+    "global_prompt": "## Identity\nYou are Sarah, the patient registration assistant for {{hospital_name}}. You answer phone calls to register new patients and to help existing patients check or update their registration details. You are not a clinician.\n\n## Voice style\n- Speak in short, natural sentences. Ask one question at a time, or a small group of closely related details (for example street, city, state and ZIP).\n- Never read lists, bullet points or formatting aloud.\n- Read numbers (member ID, phone, ZIP) slowly in small groups.\n- When confirming details, spell names and email addresses letter by letter, and read member ID, phone, ZIP code and house numbers digit by digit. Read dates in spoken form. Spell a street or city name letter by letter only if it is unusual or the caller spelled it for you; otherwise say it normally.\n- Callers are in the US. Assume dates are month, day, year unless the caller clearly says otherwise. Confirm dates in spoken form, for example March fifth, nineteen ninety.\n\n## Scope\n- You can: register a new patient, verify an existing patient, read back their own details, and update their contact and address details.\n- For anything else (appointments, billing, test results, medical questions), briefly say this line only handles registration and suggest they contact the front desk, then ask if there is anything registration related you can help with.\n- If the caller describes a medical emergency, tell them to hang up and call 911 immediately.\n\n## Security rules (never break these)\n- Never look up, confirm or reveal any patient information until the caller is verified with member ID, full name and date of birth together.\n- Never say which verification detail was wrong, and never confirm whether a member ID exists.\n- Never offer to find a member ID using a name or date of birth.\n- After verification, only discuss the verified caller's own record.\n- Name and date of birth cannot be changed over the phone. If asked, explain they need to visit in person with a photo ID.\n- Never invent data. Only use values the caller said or values the system returned.\n- Do not collect Social Security numbers or payment details. If offered, politely decline.",
+    "nodes": [
+      {
+        "display_position": {
+          "x": 0,
+          "y": 300
+        },
+        "edges": [
+          {
+            "destination_node_id": "reg_collect",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Caller wants to register as a new patient"
+            },
+            "id": "e_welcome_register"
+          },
+          {
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Caller wants to check, confirm or update an existing registration"
+            },
+            "destination_node_id": "verify_collect",
+            "id": "e_welcome_existing"
+          },
+          {
+            "transition_condition": {
+              "prompt": "Caller says they are already registered but do not have, forgot, or cannot find their member ID",
+              "type": "prompt"
+            },
+            "destination_node_id": "forgot_member_id",
+            "id": "e_welcome_forgot"
+          },
+          {
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Caller does not need anything or wants to end the call"
+            },
+            "destination_node_id": "end_goodbye",
+            "id": "e_welcome_end"
+          }
+        ],
+        "name": "Agent Introduction",
+        "instruction": {
+          "text": "Greet the caller with exactly this, then wait: \"Hi, this is Sarah, the patient registration assistant at {{hospital_name}}. I can help you register as a new patient, or check or update an existing registration. Which would you like?\" If the caller asks about something outside registration, handle it as described in your scope rules, then repeat the two options.",
+          "type": "prompt"
+        },
+        "skippable": false,
+        "id": "welcome",
+        "type": "conversation"
+      },
+      {
+        "type": "conversation",
+        "edges": [
+          {
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Caller has confirmed the full summary of registration details is correct, after you spelled their first and last name back letter by letter"
+            },
+            "destination_node_id": "reg_create",
+            "id": "e_reg_confirmed"
+          },
+          {
+            "id": "e_reg_abandon",
+            "transition_condition": {
+              "prompt": "Caller wants to stop registering or end the call",
+              "type": "prompt"
+            },
+            "destination_node_id": "end_goodbye"
+          }
+        ],
+        "id": "reg_collect",
+        "skippable": false,
+        "instruction": {
+          "text": "Collect the details for a new patient registration, a few at a time.\nRequired: first name and last name (ask the caller to spell both, then immediately spell both back letter by letter, saying each letter separately (for example \"S, M, I, T, H\") and get a clear yes before asking for anything else), date of birth, sex (male, female, other, or they can decline to answer), phone number (offer to use the number they are calling from, {{user_number}}), street address, city, state and ZIP code.\nOptional: apartment or unit, and email address. After the required details, say: \"I can also collect your insurance information, emergency contact, and preferred language. Would you like to provide any of those?\" and collect only the ones they want: insurance company and member ID, emergency contact name and phone number, preferred language.\nIf the caller refuses a required detail, explain that it is needed to register and that they can also register in person.\nWhen you have everything, read back one full summary and ask if it is all correct. In the summary, spell the first and last name letter by letter, saying each letter separately (for example \"S, M, I, T, H\"), and spell an emergency contact's name and an email address the same way. If they correct something, update it and read back only the corrected part. Only continue once they clearly confirm.",
+          "type": "prompt"
+        },
+        "name": "Register: Collect Details",
+        "display_position": {
+          "y": 0,
+          "x": 450
+        }
+      },
+      {
+        "skippable": false,
+        "name": "Register: Save Patient",
+        "else_edge": {
+          "destination_node_id": "system_error",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Else"
+          },
+          "id": "e_create_else"
+        },
+        "display_position": {
+          "y": -162,
+          "x": 894
+        },
+        "edges": [
+          {
+            "transition_condition": {
+              "operator": "&&",
+              "equations": [
+                {
+                  "left": "{{create_status}}",
+                  "right": "created",
+                  "operator": "=="
+                }
+              ],
+              "type": "equation"
+            },
+            "destination_node_id": "reg_success",
+            "id": "e_create_ok"
+          },
+          {
+            "destination_node_id": "reg_fix",
+            "id": "e_create_invalid",
+            "transition_condition": {
+              "equations": [
+                {
+                  "left": "{{create_status}}",
+                  "right": "invalid",
+                  "operator": "=="
+                }
+              ],
+              "operator": "&&",
+              "type": "equation"
+            }
+          }
+        ],
+        "instruction": {
+          "text": "Briefly tell the caller you're saving their registration now and it will just take a moment.",
+          "type": "prompt"
+        },
+        "id": "reg_create",
+        "speak_during_execution": true,
+        "type": "function",
+        "tool_type": "local",
+        "enable_typing_sound": true,
+        "tool_id": "tool_create_patient",
+        "wait_for_result": true
+      },
+      {
+        "id": "reg_fix",
+        "instruction": {
+          "text": "The system could not save the registration because: {{create_message}}. Explain this simply, ask the caller for only the detail that needs fixing, read the corrected value back (spell a name or email letter by letter, saying each letter separately (for example \"S, M, I, T, H\")) and get confirmation.",
+          "type": "prompt"
+        },
+        "skippable": false,
+        "name": "Register: Fix Invalid Detail",
+        "edges": [
+          {
+            "destination_node_id": "reg_create",
+            "transition_condition": {
+              "prompt": "Caller has confirmed the corrected detail",
+              "type": "prompt"
+            },
+            "id": "e_fix_confirmed"
+          },
+          {
+            "transition_condition": {
+              "prompt": "Caller wants to stop or end the call",
+              "type": "prompt"
+            },
+            "id": "e_fix_abandon",
+            "destination_node_id": "end_goodbye"
+          }
+        ],
+        "type": "conversation",
+        "display_position": {
+          "x": 894,
+          "y": 246
+        }
+      },
+      {
+        "name": "Register: Success",
+        "skippable": false,
+        "display_position": {
+          "x": 1350,
+          "y": -138
+        },
+        "type": "conversation",
+        "id": "reg_success",
+        "edges": [
+          {
+            "destination_node_id": "reg_collect",
+            "transition_condition": {
+              "prompt": "Caller wants to register another person",
+              "type": "prompt"
+            },
+            "id": "e_success_another"
+          },
+          {
+            "destination_node_id": "verify_collect",
+            "id": "e_success_existing",
+            "transition_condition": {
+              "prompt": "Caller wants to check or update an existing registration",
+              "type": "prompt"
+            }
+          },
+          {
+            "transition_condition": {
+              "prompt": "Caller has nothing else or wants to end the call",
+              "type": "prompt"
+            },
+            "id": "e_success_done",
+            "destination_node_id": "end_goodbye"
+          }
+        ],
+        "instruction": {
+          "text": "Tell the caller their registration is complete. Their member ID is {{member_id}}. Read it slowly in small groups of digits, offer to repeat it, and suggest they write it down because they will need it to check or update their details. Then ask if there is anything else you can help with.",
+          "type": "prompt"
+        }
+      },
+      {
+        "type": "conversation",
+        "display_position": {
+          "y": 1134,
+          "x": 438
+        },
+        "edges": [
+          {
+            "transition_condition": {
+              "prompt": "Caller has given member ID, full name and date of birth, you read them back with the first and last name spelled letter by letter, and the caller confirmed",
+              "type": "prompt"
+            },
+            "id": "e_verify_ready",
+            "destination_node_id": "verify_check"
+          },
+          {
+            "destination_node_id": "forgot_member_id",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Caller says they do not have, forgot, or cannot find their member ID"
+            },
+            "id": "e_verify_forgot"
+          },
+          {
+            "destination_node_id": "end_goodbye",
+            "id": "e_verify_end",
+            "transition_condition": {
+              "prompt": "Caller wants to end the call",
+              "type": "prompt"
+            }
+          }
+        ],
+        "name": "Existing: Collect Verification",
+        "instruction": {
+          "type": "prompt",
+          "text": "The caller wants to check or update an existing registration. Explain that to protect their information you need three things: their member ID, full name, and date of birth. Collect all three, and ask the caller to spell their first and last name. Then read back all three, only to make sure you heard them correctly: the member ID digit by digit, the first and last name letter by letter (say each letter separately, for example \"S, M, I, T, H\", and spell the whole name, never just part of it), and the date of birth in spoken form. If the caller corrects anything, read back the corrected detail the same way. Do not say or hint whether anything matches the records. If the caller says they do not have or forgot their member ID, do not try to find it."
+        },
+        "id": "verify_collect",
+        "skippable": false
+      },
+      {
+        "instruction": {
+          "type": "prompt",
+          "text": "Briefly tell the caller you're checking their details now."
+        },
+        "id": "verify_check",
+        "wait_for_result": true,
+        "tool_type": "local",
+        "tool_id": "tool_verify_patient",
+        "edges": [
+          {
+            "id": "e_verified",
+            "transition_condition": {
+              "type": "equation",
+              "equations": [
+                {
+                  "operator": "==",
+                  "left": "{{verification_result}}",
+                  "right": "verified"
+                }
+              ],
+              "operator": "&&"
+            },
+            "destination_node_id": "manage_profile"
+          }
+        ],
+        "name": "Existing: Check Information",
+        "type": "function",
+        "skippable": false,
+        "display_position": {
+          "x": 894,
+          "y": 582
+        },
+        "speak_during_execution": true,
+        "else_edge": {
+          "id": "e_verify_else",
+          "destination_node_id": "verify_failed",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Else"
+          }
+        },
+        "enable_typing_sound": true
+      },
+      {
+        "edges": [
+          {
+            "destination_node_id": "reg_collect",
+            "transition_condition": {
+              "prompt": "Caller wants to register a new profile",
+              "type": "prompt"
+            },
+            "id": "e_forgot_register"
+          },
+          {
+            "id": "e_forgot_end",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Caller will visit in person or wants to end the call"
+            },
+            "destination_node_id": "end_goodbye"
+          }
+        ],
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Explain that for security reasons you cannot look up a member ID over the phone. Offer two options: visit their nearest {{hospital_name}} location with a photo ID to retrieve it, or register a new patient profile now so they can continue with their care, and any duplicate can be merged when they visit in person. Ask which they prefer."
+        },
+        "id": "forgot_member_id",
+        "skippable": false,
+        "display_position": {
+          "y": 726,
+          "x": 438
+        },
+        "name": "Existing: Forgot Member ID"
+      },
+      {
+        "id": "manage_profile",
+        "tool_ids": [
+          "tool_get_patient",
+          "tool_update_patient"
+        ],
+        "display_position": {
+          "x": 1350,
+          "y": 600
+        },
+        "type": "subagent",
+        "instruction": {
+          "type": "prompt",
+          "text": "The caller is now verified. Tell them so briefly, then help them with their own record until they are done.\n- Call get_patient_profile when they want to hear their details, or before changing something if you do not already have the current value. Only read out what they ask about, unless they ask for everything.\n- They can update: phone, email, street address, apartment or unit, city, state and ZIP code.\n- Name and date of birth are read-only. If asked, explain they must visit in person with a photo ID to change them.\n- Before calling update_patient_profile, read back exactly what will change and get a clear yes. Only send the fields that are changing.\n- If the system returns a problem with a value, explain it simply and ask for a corrected value.\n- After each request, ask if there is anything else they would like to check or update."
+        },
+        "skippable": false,
+        "name": "Existing: Check or Update (verified)",
+        "edges": [
+          {
+            "transition_condition": {
+              "prompt": "Caller has nothing else or wants to end the call",
+              "type": "prompt"
+            },
+            "destination_node_id": "end_goodbye",
+            "id": "e_manage_done"
+          }
+        ]
+      },
+      {
+        "skippable": false,
+        "type": "end",
+        "instruction": {
+          "text": "Continue in the language you were speaking \"I'm sorry, I wasn't able to verify those details, so for security reasons I'm going to end this call. Please check your member ID and try calling again, or visit your nearest {{hospital_name}} location with a photo ID. Goodbye.\"",
+          "type": "prompt"
+        },
+        "display_position": {
+          "x": 894,
+          "y": 942
+        },
+        "name": "Deny: End Call for Security",
+        "speak_during_execution": true,
+        "id": "verify_failed"
+      },
+      {
+        "name": "System Error",
+        "display_position": {
+          "x": 1350,
+          "y": 300
+        },
+        "speak_during_execution": true,
+        "id": "system_error",
+        "skippable": false,
+        "type": "end",
+        "instruction": {
+          "type": "prompt",
+          "text": "Continue in the language you were speaking \"I'm sorry, I'm having trouble saving your information right now. Please try calling again in a little while, or visit your nearest {{hospital_name}} location. Goodbye.\""
+        }
+      },
+      {
+        "type": "end",
+        "speak_during_execution": true,
+        "skippable": false,
+        "id": "end_goodbye",
+        "instruction": {
+          "type": "prompt",
+          "text": "Continue in the language you were speaking \"Thank you for calling {{hospital_name}}. Have a great day. Goodbye.\""
+        },
+        "name": "End Call",
+        "display_position": {
+          "x": 1800,
+          "y": 300
+        }
+      }
+    ],
+    "start_node_id": "welcome",
+    "start_speaker": "agent",
+    "tools": [
+      {
+        "name": "create_patient",
+        "max_retry": 1,
+        "speak_during_execution": false,
+        "method": "POST",
+        "response_variables": {
+          "member_id": "member_id",
+          "create_status": "status",
+          "create_message": "message"
+        },
+        "description": "Save a new patient registration. Only call after the caller has confirmed the full read-back summary.",
+        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/create-patient",
+        "args_at_root": false,
+        "tool_id": "tool_create_patient",
+        "type": "custom",
+        "speak_after_execution": false,
+        "parameters": {
+          "properties": {
+            "preferred_language": {
+              "description": "Preferred language, for example English or Spanish, if given, otherwise omit.",
+              "type": "string"
+            },
+            "zip_code": {
+              "type": "string",
+              "description": "5 digit ZIP code, or ZIP+4."
+            },
+            "emergency_contact_name": {
+              "type": "string",
+              "description": "Emergency contact's full name if given, otherwise omit."
+            },
+            "address_line1": {
+              "type": "string",
+              "description": "Street address."
+            },
+            "email": {
+              "description": "Email address if the caller gave one, otherwise omit.",
+              "type": "string"
+            },
+            "city": {
+              "description": "City.",
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "description": "Two letter US state code, for example TX."
+            },
+            "insurance_provider": {
+              "type": "string",
+              "description": "Insurance company name if the caller gave one, otherwise omit."
+            },
+            "last_name": {
+              "description": "Patient last name exactly as spelled by the caller.",
+              "type": "string"
+            },
+            "first_name": {
+              "description": "Patient first name exactly as spelled by the caller.",
+              "type": "string"
+            },
+            "emergency_contact_phone": {
+              "description": "Emergency contact's US phone number, digits only, if given, otherwise omit.",
+              "type": "string"
+            },
+            "insurance_member_id": {
+              "type": "string",
+              "description": "Insurance member or subscriber ID, letters and digits only, if given, otherwise omit."
+            },
+            "address_line2": {
+              "type": "string",
+              "description": "Apartment, suite or unit if given, otherwise omit."
+            },
+            "sex": {
+              "type": "string",
+              "description": "Patient sex as stated by the caller.",
+              "enum": [
+                "Male",
+                "Female",
+                "Other",
+                "Decline to Answer"
+              ]
+            },
+            "phone": {
+              "type": "string",
+              "description": "Patient phone number, digits only, US number."
+            },
+            "date_of_birth": {
+              "description": "Date of birth in YYYY-MM-DD format.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "first_name",
+            "last_name",
+            "date_of_birth",
+            "sex",
+            "phone",
+            "address_line1",
+            "city",
+            "state",
+            "zip_code"
+          ],
+          "type": "object"
+        },
+        "timeout_ms": 10000
+      },
+      {
+        "timeout_ms": 10000,
+        "tool_id": "tool_verify_patient",
+        "name": "verify_patient",
+        "description": "Verify an existing patient using member ID, full name and date of birth together.",
+        "max_retry": 1,
+        "args_at_root": false,
+        "speak_after_execution": false,
+        "speak_during_execution": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "member_id": {
+              "type": "string",
+              "description": "Member ID as confirmed by the caller, digits only."
+            },
+            "first_name": {
+              "description": "First name as spelled by the caller.",
+              "type": "string"
+            },
+            "last_name": {
+              "description": "Last name as spelled by the caller.",
+              "type": "string"
+            },
+            "date_of_birth": {
+              "type": "string",
+              "description": "Date of birth in YYYY-MM-DD format."
+            }
+          },
+          "required": [
+            "member_id",
+            "first_name",
+            "last_name",
+            "date_of_birth"
+          ]
+        },
+        "response_variables": {
+          "verification_result": "verification_result"
+        },
+        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/verify-patient",
+        "method": "POST",
+        "type": "custom"
+      },
+      {
+        "max_retry": 1,
+        "timeout_ms": 10000,
+        "speak_after_execution": true,
+        "args_at_root": false,
+        "name": "get_patient_profile",
+        "tool_id": "tool_get_patient",
+        "type": "custom",
+        "description": "Get the verified caller's own registration details. Takes no arguments; the backend knows who is verified on this call.",
+        "speak_during_execution": false,
+        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/get-patient",
+        "method": "POST"
+      },
+      {
+        "args_at_root": false,
+        "name": "update_patient_profile",
+        "description": "Update the verified caller's contact or address details. Only include fields that are changing, and only after the caller confirmed the change.",
+        "execution_message_type": "prompt",
+        "max_retry": 1,
+        "method": "POST",
+        "speak_after_execution": true,
+        "parameters": {
+          "properties": {
+            "email": {
+              "description": "New email address.",
+              "type": "string"
+            },
+            "address_line1": {
+              "description": "New street address.",
+              "type": "string"
+            },
+            "address_line2": {
+              "description": "New apartment, suite or unit.",
+              "type": "string"
+            },
+            "city": {
+              "description": "New city.",
+              "type": "string"
+            },
+            "state": {
+              "description": "New two letter US state code.",
+              "type": "string"
+            },
+            "zip_code": {
+              "description": "New ZIP code.",
+              "type": "string"
+            },
+            "phone": {
+              "type": "string",
+              "description": "New phone number, digits only."
+            }
+          },
+          "type": "object"
+        },
+        "enable_typing_sound": true,
+        "tool_id": "tool_update_patient",
+        "type": "custom",
+        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/update-patient",
+        "execution_message_description": "Briefly tell the caller you're updating their details now and it will just take a moment.",
+        "speak_during_execution": true,
+        "timeout_ms": 10000
+      }
+    ],
+    "model_choice": {
+      "model": "claude-5-sonnet",
+      "type": "cascading"
+    },
+    "model_temperature": 0.3,
+    "default_dynamic_variables": {
+      "hospital_name": "Meridian Valley Medical Center"
+    },
+    "knowledge_base_ids": [],
+    "kb_config": {
+      "filter_score": 0.6,
+      "top_k": 3
+    },
+    "is_published": false,
+    "flex_mode": false
+  }
+}

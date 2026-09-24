@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { Badge } from "@/components/Badge";
 import { formatDateTime, formatDob, formatPhone } from "@/lib/format";
@@ -6,6 +6,8 @@ import { formatDateTime, formatDob, formatPhone } from "@/lib/format";
 import type { Patient } from "../types";
 
 export function PatientTable({ patients }: { patients: Patient[] }) {
+  const navigate = useNavigate();
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
@@ -22,7 +24,13 @@ export function PatientTable({ patients }: { patients: Patient[] }) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {patients.map((p) => (
-            <tr key={p.patient_id} className="hover:bg-slate-50">
+            // The whole row opens the patient; the name stays a real link for
+            // keyboard users, middle-click and "open in new tab".
+            <tr
+              key={p.patient_id}
+              onClick={() => navigate(`/patients/${p.patient_id}`)}
+              className="cursor-pointer hover:bg-slate-50"
+            >
               <td className="py-2.5 pr-4">
                 <Link
                   to={`/patients/${p.patient_id}`}

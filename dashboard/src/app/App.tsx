@@ -23,7 +23,8 @@ function createRouter(onSignOut?: () => void) {
         { path: "*", element: <Navigate to="/patients" replace /> },
       ],
     },
-  ]);
+    // "/dashboard/" in the build the backend serves, "/" standalone.
+  ], { basename: import.meta.env.BASE_URL.replace(/\/$/, "") || "/" });
 }
 
 export function App() {
