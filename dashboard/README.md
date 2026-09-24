@@ -14,7 +14,7 @@ npm run dev                  # http://localhost:5173
 
 - `VITE_API_BASE_URL` sets which backend to talk to. Without it, the
   dashboard uses the Railway deployment.
-- `VITE_API_KEY` is the backend's `API_KEY` (`API_READ_KEY`). When it's set,
+- `VITE_API_KEY` is the backend's `API_KEY`. When it's set,
   there's no sign-in screen. Leave it unset on any publicly hosted build,
   because `VITE_*` values are compiled into the JavaScript. Without it, the
   dashboard asks for the key and keeps it only for the browser tab.

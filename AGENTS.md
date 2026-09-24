@@ -24,8 +24,7 @@ To go live:
 2. Re-import `backend/assets/retell_agent_scripts/agent.json` into Retell. Its tool
    URLs already point at the Railway URL. The agent language is `["en-US", "es-419"]`.
    There is no upload script; import it through the Retell dashboard.
-3. On Railway: `ALLOW_UNSIGNED_REQUESTS=false`, `RETELL_API_KEY` set, and `API_KEY` set
-   (`API_READ_KEY` still works as an alias). Healthcheck path is now `/health`.
+3. On Railway: `ALLOW_UNSIGNED_REQUESTS=false`, `RETELL_API_KEY` set, and `API_KEY` set. Healthcheck path is now `/health`.
 4. Put the Retell phone number into the root `README.md` (marked TODO).
 
 Stack decisions: MongoDB Atlas via Motor (async), verified in `playground/db_connection/`.

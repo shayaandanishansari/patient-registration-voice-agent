@@ -247,7 +247,7 @@ python -m pytest -q    # mongomock-motor, no real database needed
 |---|---|
 | `MONGODB_URI` | Atlas connection string |
 | `MONGODB_DB` | Database name (default `patient_registration`) |
-| `API_KEY` | Required `X-API-Key` for the REST API (`API_READ_KEY` is still accepted) |
+| `API_KEY` | Required `X-API-Key` for the REST API, dashboard and docs |
 | `RETELL_API_KEY` | The Retell key used to verify `X-Retell-Signature` |
 | `ALLOW_UNSIGNED_REQUESTS` | `true` only for local curl testing. Never in production. |
 | `PUBLIC_BASE_URL` | This deployment's URL (informational) |

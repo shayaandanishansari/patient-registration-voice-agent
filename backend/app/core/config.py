@@ -1,7 +1,6 @@
 import os
 from functools import lru_cache
 
-from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,11 +16,8 @@ class Settings(BaseSettings):
 
     retell_api_key: str = ""
     public_base_url: str = ""
-    # X-API-Key for the REST API. API_READ_KEY is the older name from when the
-    # API was read-only; still accepted so existing deployments keep working.
-    api_key: str = Field(
-        default="", validation_alias=AliasChoices("API_KEY", "API_READ_KEY")
-    )
+    # X-API-Key for the REST API, dashboard and docs.
+    api_key: str = ""
     allow_unsigned_requests: bool = False
 
     @property
