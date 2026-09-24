@@ -37,6 +37,7 @@ Then look at the data:
 BASE=https://patient-registration-voice-agent-production-f401.up.railway.app
 curl "$BASE/patients?last_name=doe" -H "x-api-key: $KEY"
 curl "$BASE/calls?limit=5" -H "x-api-key: $KEY"   # includes transcripts
+curl "$BASE/logs?since=2026-09-24T00:00:00Z&hide_http=true" -H "x-api-key: $KEY"
 ```
 
 ## Architecture

@@ -116,6 +116,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Logs
+         * @description Log records, newest first. Kept for 90 days.
+         */
+        get: operations["list_logs_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/logs/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Log Events
+         * @description Every event name that has been logged, for filtering.
+         */
+        get: operations["list_log_events_logs_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/retell/tools/check-existing-patient": {
         parameters: {
             query?: never;
@@ -353,6 +393,12 @@ export interface components {
             data?: components["schemas"]["PatientOut"] | null;
             error?: components["schemas"]["ApiError"] | null;
         };
+        /** Envelope[list[str]] */
+        Envelope_list_str__: {
+            /** Data */
+            data?: string[] | null;
+            error?: components["schemas"]["ApiError"] | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -372,6 +418,13 @@ export interface components {
             error?: components["schemas"]["ApiError"] | null;
             meta: components["schemas"]["ListMeta"];
         };
+        /** ListEnvelope[LogOut] */
+        ListEnvelope_LogOut_: {
+            /** Data */
+            data: components["schemas"]["LogOut"][];
+            error?: components["schemas"]["ApiError"] | null;
+            meta: components["schemas"]["ListMeta"];
+        };
         /** ListEnvelope[PatientOut] */
         ListEnvelope_PatientOut_: {
             /** Data */
@@ -385,6 +438,41 @@ export interface components {
             limit: number;
             /** Next Cursor */
             next_cursor?: string | null;
+        };
+        /** LogOut */
+        LogOut: {
+            /** Id */
+            id: string;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Level */
+            level: string;
+            /** Logger */
+            logger: string;
+            /**
+             * Event
+             * @description Set for EventLogger records; plain logging has message.
+             */
+            event?: string | null;
+            /** Message */
+            message?: string | null;
+            /** Fields */
+            fields?: {
+                [key: string]: unknown;
+            };
+            /** Request Id */
+            request_id?: string | null;
+            /** Environment */
+            environment?: string | null;
+            /** Func */
+            func?: string | null;
+            /** Line */
+            line?: number | null;
+            /** Exception */
+            exception?: string | null;
         };
         /** PatientCreate */
         PatientCreate: {
@@ -667,7 +755,9 @@ export interface operations {
                 "x-api-key"?: string | null;
             };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -698,7 +788,9 @@ export interface operations {
                 "x-api-key"?: string | null;
             };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -735,7 +827,9 @@ export interface operations {
             path: {
                 patient_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -768,7 +862,9 @@ export interface operations {
             path: {
                 patient_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -805,7 +901,9 @@ export interface operations {
             path: {
                 patient_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -841,7 +939,9 @@ export interface operations {
                 "x-api-key"?: string | null;
             };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -874,7 +974,9 @@ export interface operations {
             path: {
                 call_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -909,7 +1011,9 @@ export interface operations {
                 "x-api-key"?: string | null;
             };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -920,6 +1024,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListEnvelope_AppointmentOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_logs_logs_get: {
+        parameters: {
+            query?: {
+                /** @description Only records at or after this time. */
+                since?: string | null;
+                /** @description Only records before this time. */
+                until?: string | null;
+                /** @description Minimum level. */
+                level?: ("DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL") | null;
+                event?: string | null;
+                /** @description Leave out the per-request http_request records. */
+                hide_http?: boolean;
+                call_id?: string | null;
+                request_id?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: {
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListEnvelope_LogOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_log_events_logs_events_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-api-key"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                api_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_str__"];
                 };
             };
             /** @description Validation Error */

@@ -2,7 +2,8 @@
 
 Read-only web UI over the backend's REST API: patients (with filters),
 patient detail (demographics, insurance, edit history, appointments, calls),
-and calls (transcript, summary, recording). Mirrors the feature-based
+calls (transcript, summary, recording), and logs (everything Retell sent
+and the backend did, filterable by time range, level, event and call). Mirrors the feature-based
 approach used for `backend/`.
 
 ## Stack
@@ -33,6 +34,7 @@ dashboard/
       patients/          # api/ (query hooks), components/, types.ts, index.ts
       calls/
       appointments/
+      logs/
     components/          # shared, feature-agnostic UI (Card, Button, Badge, ...)
     lib/                 # API client (envelope unwrapping), API key, formatting
     types/api.d.ts       # generated from the backend's OpenAPI schema
