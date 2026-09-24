@@ -26,20 +26,6 @@ async def get_verified_patient_id(db: Database, call_id: str) -> str | None:
     return doc.get("verified_patient_id") if doc else None
 
 
-async def get_call_patient_id(db: Database, call_id: str) -> str | None:
-    """The patient this call is acting for: the verified caller if there is
-    one, otherwise the most recent patient registered on this call."""
-    doc = await db.calls.find_one(
-        {"call_id": call_id}, {"verified_patient_id": 1, "patients_created": 1}
-    )
-    if not doc:
-        return None
-    if doc.get("verified_patient_id"):
-        return doc["verified_patient_id"]
-    created = doc.get("patients_created") or []
-    return created[-1] if created else None
-
-
 async def record_verification_attempt(
     db: Database, call_id: str, patient_id: str | None
 ) -> None:

@@ -1,7 +1,7 @@
 # Hospital VoiceAgent — backend
 
 FastAPI service behind the Retell AI voice agent. It registers new patients,
-verifies and updates existing ones, books a first appointment, and exposes a
+verifies and updates existing ones, and exposes a
 REST API over the same data. See `../README.md` for the live demo details and
 `../docs/identity-voiceagent.html` for the design rationale (what
 kind of phone line this is, and why verification works the way it does).
@@ -21,8 +21,6 @@ Retell AI  -- telephony, speech-to-text, text-to-speech, and the LLM (GPT-4.1)
    +--> POST /retell/tools/verify-patient          }  during the live call
    +--> POST /retell/tools/get-patient             }  (signed with
    +--> POST /retell/tools/update-patient          }  X-Retell-Signature)
-   +--> POST /retell/tools/get-appointment-slots   }
-   +--> POST /retell/tools/book-appointment        }
    |
    +--> POST /retell/webhook   call_started / call_ended / call_analyzed
    v
@@ -33,10 +31,10 @@ FastAPI (this service)
    core/      config, database, auth, errors, validation rules, migrations
    |
    v
-MongoDB Atlas — collections: patients, calls, appointments
+MongoDB Atlas — collections: patients, calls, logs
    ^
    |
-REST API: /patients (CRUD), /calls, /appointments, /health
+REST API: /patients (CRUD), /calls, /logs, /stats, /health
 ```
 
 **Separation of concerns.** Retell owns telephony, speech and the LLM, and
@@ -92,8 +90,6 @@ without that privilege it logs a warning and the app-level rules still apply.
 
 `calls` stores Retell call metadata, the transcript, the post-call analysis,
 and links to patients (`patients_created`, `verified_patient_id`).
-`appointments` holds bookings. Its unique index on `slot_id` makes
-double-booking impossible.
 
 ## REST API
 
@@ -116,7 +112,6 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 | PUT | `/patients/{patient_id}` | Partial update: only the fields sent change. `null` clears an optional field. Required fields can't be cleared. |
 | DELETE | `/patients/{patient_id}` | Soft delete: sets `deleted_at` and returns the record |
 | GET | `/calls`, `/calls/{call_id}` | `?patient_id=` lists the calls that registered or verified a patient |
-| GET | `/appointments` | `?patient_id=` |
 | GET | `/health` | No auth. Checks the database connection. |
 | GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Needs the key: the browser asks for a login (any username, the API key as password), then a session cookie covers the dashboard's API calls. |
 
@@ -167,12 +162,11 @@ welcome (emergency/911 disclaimer, "register, check/update, or book?")
  │                                   ─> create_patient
  │                                        ├─ created ─> reg_success ("You're all set, Jane",
  │                                        │             member ID read in groups)
- │                                        │             ─> appointment_schedule (optional)
  │                                        ├─ invalid ─> reg_fix (re-ask that one field)
  │                                        ├─ duplicate ─> reg_existing
  │                                        └─ error/timeout ─> system_error (spoken apology)
  ├─ check/update ─> verify_collect (member ID + full name + DOB) ─> verify_patient
- │                   ├─ verified ─> manage_profile (read back / update, can book)
+ │                   ├─ verified ─> manage_profile (read back / update)
  │                   └─ not verified ─> verify_failed (ends call, reveals nothing)
  ├─ forgot member ID ─> forgot_member_id (in person with photo ID, or register)
  └─ start_over (global node: reachable from anywhere)
@@ -196,7 +190,7 @@ welcome (emergency/911 disclaimer, "register, check/update, or book?")
   numbers read digit by digit in groups, dates spoken as words. The model
   never reads lists or formatting aloud.
 - **The backend never trusts the LLM with identity.** After verification,
-  `get-patient`/`update-patient`/`book-appointment` resolve the patient
+  `get-patient`/`update-patient` resolve the patient
   from Retell's `call_id` on the server. No tool accepts a patient ID from
   the model, so a confused or prompt-injected model can't reach another
   record.
@@ -216,7 +210,7 @@ welcome (emergency/911 disclaimer, "register, check/update, or book?")
 | Caller corrects a field ("D-A-V-I-S, not D-A-V-I-E-S") | The prompt replaces the value and confirms just that field. The full read-back before saving catches anything missed. |
 | Caller wants to start over | Global `start_over` node, reachable from any point. Unsaved details are discarded. If a record was already saved, the agent says so. |
 | Database write fails | The tool returns HTTP 500 and Retell takes the else-edge to `system_error`, which apologizes and ends the call. There is never silence (see `test_db_failure_returns_error_not_silence`). |
-| Tool call retried by Retell | `create-patient` is idempotent per call + name + DOB. `book-appointment` returns the existing booking. Updates are naturally idempotent. |
+| Tool call retried by Retell | `create-patient` is idempotent per call + name + DOB. Updates are naturally idempotent. |
 | Call drops mid-registration | Nothing is written until the caller confirms the read-back, so there are no half-records. The webhook still records the call, its transcript and its `disconnection_reason`. On the next call they start over, and if they had finished, the duplicate check recognizes them. |
 | Returning caller registers again | The duplicate check (phone + name + DOB) offers to update instead. |
 | Household sharing one phone | A phone match alone isn't treated as a duplicate: a household member with a different name or DOB registers normally. |
@@ -274,8 +268,9 @@ python -m pytest -q    # mongomock-motor, no real database needed
 - **Verification uses exact matching** (case-insensitive), with no fuzzy name
   matching. There's no lockout across calls after repeated failed
   verification, and no human escalation path.
-- **Mock scheduling.** Slots are generated (weekdays, two providers, next two
-  weeks), with no timezone handling, cancellation or rescheduling.
+- **No scheduling.** The line handles registration only; callers who ask
+  about appointments are sent to the front desk. A mock scheduling backend
+  is kept on the `feature/appointment-scheduling` branch.
 - **One shared API key**, not per-user auth or roles.
 - **Duplicate detection needs name + DOB + phone together.** A patient who
   changed their phone number won't be caught; a person merges those records
@@ -287,5 +282,5 @@ python -m pytest -q    # mongomock-motor, no real database needed
 
 - A lockout or escalation to a human after N failed verifications across calls.
 - Per-user dashboard auth, and PHI redaction in logs.
-- Real scheduling (a provider calendar integration), plus reschedule/cancel.
+- Scheduling as its own line or agent, backed by a provider calendar.
 - Fuzzy name matching for verification and duplicates (e.g. "Jon" vs "John").

@@ -4,7 +4,6 @@ import { Link, useParams } from "react-router";
 
 import { Card } from "@/components/Card";
 import { ErrorMessage, Loading } from "@/components/QueryState";
-import { AppointmentList } from "@/features/appointments";
 import { CallDetail, CallList, RecentCalls, useCall } from "@/features/calls";
 import { RecentLogs } from "@/features/logs";
 import { PatientProfile, RecentPatients, usePatient } from "@/features/patients";
@@ -57,14 +56,9 @@ export function PatientRoute() {
       ) : (
         <>
           <PatientProfile patient={query.data} />
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card title="Appointments">
-              <AppointmentList patientId={patientId} />
-            </Card>
-            <Card title="Calls">
-              <CallList patientId={patientId} />
-            </Card>
-          </div>
+          <Card title="Calls">
+            <CallList patientId={patientId} />
+          </Card>
         </>
       )}
     </div>

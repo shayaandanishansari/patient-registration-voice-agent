@@ -62,7 +62,7 @@ async def test_every_non_public_route_rejects_anonymous_requests(app, client):
     assert routes
     for method, path in routes:
         url = path.replace("{patient_id}", "00000000-0000-0000-0000-000000000000")
-        url = url.replace("{call_id}", "call-1").replace("{appointment_id}", "a-1")
+        url = url.replace("{call_id}", "call-1")
         url = url.replace("{path:path}", "patients")
         assert "{" not in url, f"add a placeholder for {path}"
         response = await client.request(

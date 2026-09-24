@@ -1,7 +1,7 @@
 # Dashboard architecture
 
 Read-only web UI over the backend's REST API: patients (with filters),
-patient detail (demographics, insurance, edit history, appointments, calls),
+patient detail (demographics, insurance, edit history, calls),
 calls (transcript, summary, recording), and logs (everything Retell sent
 and the backend did, filterable by time range, level, event and call). Mirrors the feature-based
 approach used for `backend/`.
@@ -33,7 +33,7 @@ dashboard/
     features/
       patients/          # api/ (query hooks), components/, types.ts, index.ts
       calls/
-      appointments/
+      stats/
       logs/
     components/          # shared, feature-agnostic UI (Card, Button, Badge, ...)
     lib/                 # API client (envelope unwrapping), API key, formatting
@@ -42,7 +42,7 @@ dashboard/
 
 **Boundaries.** Each feature exposes its public surface through `index.ts`.
 Features never import from each other. When a page needs two features
-(patient detail shows calls and appointments), the composition happens in
+(patient detail shows the patient and their calls), the composition happens in
 `app/routes.tsx`. `components/` and `lib/` never import from `features/`.
 This is enforced by convention for now; an ESLint `import/no-restricted-paths`
 rule would make it mechanical.

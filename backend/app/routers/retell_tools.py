@@ -7,7 +7,6 @@ from app.core.database import DbDep
 from app.core.logger import EventLogger
 from app.core.security import verify_retell_signature
 from app.models.retell import RetellToolRequest
-from app.services import appointments as appointments_service
 from app.services import calls as calls_service
 from app.services import patients as patients_service
 
@@ -95,40 +94,3 @@ async def update_patient(body: RetellToolRequest, db: DbDep) -> dict:
 
     result = await patients_service.voice_update_patient(db, call_id, patient_id, body.args)
     return result
-
-
-# --- Scheduling ------------------------------------------------------------------
-# Booking is bound server-side to the patient this call registered or
-# verified, never to an ID the LLM passes in.
-
-
-@router.post("/get-appointment-slots")
-async def get_appointment_slots(body: RetellToolRequest, db: DbDep) -> dict:
-    call_id = body.call.call_id
-    if not await calls_service.get_call_patient_id(db, call_id):
-        return {"status": "not_eligible", "slots": []}
-
-    preference = str(body.args.get("preference") or "")
-    slots = await appointments_service.available_slots(db, preference)
-    return {"status": "ok" if slots else "none_available", "slots": slots}
-
-
-@router.post("/book-appointment")
-async def book_appointment(body: RetellToolRequest, db: DbDep) -> dict:
-    call_id = body.call.call_id
-    patient_id = await calls_service.get_call_patient_id(db, call_id)
-    if not patient_id:
-        return {"status": "not_eligible", "message": "No registered patient on this call."}
-
-    slot_id = str(body.args.get("slot_id") or "").strip()
-    try:
-        appt = await appointments_service.book(db, patient_id, slot_id, call_id)
-    except appointments_service.SlotUnavailable:
-        return {"status": "unavailable", "message": "That time is no longer available."}
-
-    return {
-        "status": "booked",
-        "spoken": appt["spoken"],
-        "provider": appt["provider"],
-        "message": f"Booked a {appt['visit_type'].lower()} with {appt['provider']} on {appt['spoken']}.",
-    }

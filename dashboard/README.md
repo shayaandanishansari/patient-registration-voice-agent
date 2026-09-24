@@ -1,7 +1,7 @@
 # Hospital VoiceAgent — dashboard
 
 A simple web UI over the patient database: search patients, open a record
-(demographics, insurance, edit history, booked appointments, calls), and read
+(demographics, insurance, edit history, calls), and read
 each call's transcript and summary. Read-only; all writes go through the
 voice agent or the REST API.
 

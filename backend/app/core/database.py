@@ -25,10 +25,6 @@ class Database:
         return self.db["calls"]
 
     @property
-    def appointments(self):
-        return self.db["appointments"]
-
-    @property
     def logs(self):
         return self.db["logs"]
 
@@ -46,9 +42,6 @@ class Database:
         await self.patients.create_index("last_name")
         await self.patients.create_index([("phone_number", 1), ("date_of_birth", 1)])
         await self.calls.create_index("call_id", unique=True)
-        # Unique slot_id is what makes double-booking impossible.
-        await self.appointments.create_index("slot_id", unique=True)
-        await self.appointments.create_index("patient_id")
         await self.logs.create_index(
             "ts", expireAfterSeconds=LOG_RETENTION_DAYS * 24 * 60 * 60
         )

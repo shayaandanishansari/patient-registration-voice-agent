@@ -1,4 +1,3 @@
-from app.models.appointments import AppointmentOut, SlotOut
 from app.models.calls import CallOut
 from app.models.common import ApiError, Envelope, ListEnvelope, ListMeta
 from app.models.patients import (
@@ -11,7 +10,6 @@ from app.models.retell import RetellCall, RetellToolRequest
 
 __all__ = [
     "ApiError",
-    "AppointmentOut",
     "CallOut",
     "Envelope",
     "ListEnvelope",
@@ -21,6 +19,5 @@ __all__ = [
     "PatientUpdate",
     "RetellCall",
     "RetellToolRequest",
-    "SlotOut",
     "UpdateHistoryEntry",
 ]

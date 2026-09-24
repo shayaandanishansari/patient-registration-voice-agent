@@ -17,7 +17,6 @@ from app.core.errors import (
 from app.core.logger import EventLogger, MongoLogHandler, RequestLogMiddleware
 from app.core.migrations import migrate_legacy_records
 from app.routers import (
-    appointments,
     calls,
     dashboard,
     docs,
@@ -110,7 +109,6 @@ def create_app() -> FastAPI:
     app.include_router(docs.router)
     app.include_router(patients.router)
     app.include_router(calls.router)
-    app.include_router(appointments.router)
     app.include_router(logs.router)
     app.include_router(stats.router)
     app.include_router(retell_tools.router)

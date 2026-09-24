@@ -25,7 +25,7 @@ the dashboard, the Retell tool endpoints, or the phone line itself?
 
 | Route | Protection |
 |---|---|
-| `/patients`, `/calls`, `/appointments` | `X-API-Key` (or the dashboard's session cookie), compared in constant time. No key configured means every request is refused. |
+| `/patients`, `/calls`, `/logs`, `/stats` | `X-API-Key` (or the dashboard's session cookie), compared in constant time. No key configured means every request is refused. |
 | `/retell/tools/*`, `POST /retell/webhook` | Valid `X-Retell-Signature` over the raw body, max 5 minutes old (stops replays). |
 | `/health` | Public. Returns only `ok` / database status. |
 | `/dashboard` | The same API key, via the browser's login prompt; see below. |

@@ -30,15 +30,13 @@ In order.
 - [ ] Railway: `ALLOW_UNSIGNED_REQUESTS=false` is actually deployed (it was still on at
       last check), and `RETELL_API_KEY` matches Retell.
 - [ ] Re-check: unsigned `/retell/tools/*` and `/retell/webhook` requests → 401;
-      `/patients`, `/calls`, `/appointments` without the key → 401.
+      `/patients`, `/calls`, `/logs` without the key → 401.
 - [ ] Optionally delete the `probe` call record left by the earlier unsigned test.
 
 ## 3. Make AGENTS.md and the READMEs accurate
 
 - [ ] Remove features the agent doesn't have (Spanish switching, start over, 911
       greeting, appointment booking in the call).
-- [ ] Note that scheduling is built in the backend (tested) but deliberately not enabled
-      in the voice flow, to keep the call short and stable.
 - [ ] Document the event log, `/logs`, the docs page and the system diagram.
 - [ ] Fill in the Retell phone number (the `TODO` in `README.md`).
 

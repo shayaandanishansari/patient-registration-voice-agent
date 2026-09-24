@@ -99,23 +99,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/appointments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Appointments */
-        get: operations["list_appointments_appointments_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/logs": {
         parameters: {
             query?: never;
@@ -261,40 +244,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/retell/tools/get-appointment-slots": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Get Appointment Slots */
-        post: operations["get_appointment_slots_retell_tools_get_appointment_slots_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/retell/tools/book-appointment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Book Appointment */
-        post: operations["book_appointment_retell_tools_book_appointment_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/retell/webhook": {
         parameters: {
             query?: never;
@@ -332,30 +281,6 @@ export interface components {
             details?: {
                 [key: string]: unknown;
             }[] | null;
-        };
-        /** AppointmentOut */
-        AppointmentOut: {
-            /** Appointment Id */
-            appointment_id: string;
-            /** Patient Id */
-            patient_id: string;
-            /** Slot Id */
-            slot_id: string;
-            /** Provider */
-            provider: string;
-            /** Spoken */
-            spoken: string;
-            /** Visit Type */
-            visit_type: string;
-            /** Status */
-            status: string;
-            /** Booked Via Call Id */
-            booked_via_call_id?: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
         };
         /** CallOut */
         CallOut: {
@@ -428,13 +353,6 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
-        };
-        /** ListEnvelope[AppointmentOut] */
-        ListEnvelope_AppointmentOut_: {
-            /** Data */
-            data: components["schemas"]["AppointmentOut"][];
-            error?: components["schemas"]["ApiError"] | null;
-            meta: components["schemas"]["ListMeta"];
         };
         /** ListEnvelope[CallOut] */
         ListEnvelope_CallOut_: {
@@ -1061,43 +979,6 @@ export interface operations {
             };
         };
     };
-    list_appointments_appointments_get: {
-        parameters: {
-            query?: {
-                patient_id?: string | null;
-                limit?: number;
-                cursor?: string | null;
-            };
-            header?: {
-                "x-api-key"?: string | null;
-            };
-            path?: never;
-            cookie?: {
-                api_session?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListEnvelope_AppointmentOut_"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_logs_logs_get: {
         parameters: {
             query?: {
@@ -1360,80 +1241,6 @@ export interface operations {
         };
     };
     update_patient_retell_tools_update_patient_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-retell-signature"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RetellToolRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_appointment_slots_retell_tools_get_appointment_slots_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-retell-signature"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RetellToolRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    book_appointment_retell_tools_book_appointment_post: {
         parameters: {
             query?: never;
             header?: {

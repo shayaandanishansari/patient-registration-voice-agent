@@ -109,19 +109,27 @@ Retell API key and rejected if older than 5 minutes. The dashboard and
 HttpOnly session cookie. A test sweeps every route to enforce this. Details
 in [`docs/security.md`](docs/security.md).
 
+## Bonus challenges
+
+| Bonus | Status | How it's handled |
+|---|---|---|
+| **Duplicate detection** | Done, with stronger identity checks | Returning callers are recognized and offered an update instead of a new record: Sarah verifies member ID + full name + DOB, then reads the record back and updates it. Caller ID alone isn't used as identity because households share phone lines ([`docs/identity-voiceagent.html`](docs/identity-voiceagent.html)). Creating a patient also checks for a duplicate on phone + name + DOB (the REST API returns `409`). |
+| **Appointment scheduling** | Deliberately out of scope | Scheduling is usually a separate line or agent, so Sarah stays a registration and patient-information coordinator. Callers who ask about appointments are sent to the front desk. A tested mock scheduling backend (slots, booking, double-booking protection) is on the [`feature/appointment-scheduling`](https://github.com/shayaandanishansari/patient-registration-voice-agent/tree/feature/appointment-scheduling) branch, left out of `main` to keep the service focused. |
+| **Multi-language** | Done, beyond Spanish | The agent runs in 12 locales: English (US, GB, IN), Spanish (ES, Latin America), Mandarin, French, German, Hindi, Russian, Italian and Portuguese. Say "Hablo español" and Sarah continues in Spanish. The fixed closing lines are translated into the caller's language, and preferred language is stored on the record. |
+| **Call recording / transcript** | Done | Retell's webhook stores the transcript, recording URL and call analysis (summary) on a `calls` document linked to the patient it registered or verified. Visible in `GET /calls` and the dashboard. |
+| **Dashboard** | Done | [`/dashboard`](https://patient-registration-voice-agent-production-f401.up.railway.app/dashboard): overview stats, patients, calls with transcripts, and logs. |
+| **Automated tests** | Done | 144 pytest tests over the API, voice tools, webhook, validation and security (no database needed). A contract test checks the Retell flow's tool URLs and arguments against the backend. |
+
 ## Known limitations and trade-offs
 
-- Duplicate detection (name + DOB + phone) and appointment scheduling are
-  built and tested in the backend (the REST API returns `409` for a
-  duplicate), but not wired into the call flow, to keep calls short and
-  stable. Registering the same person twice by phone currently ends with
-  Sarah saying there was trouble saving.
-- The call flow is written and tested in English. The Retell agent accepts
-  other languages, but there is no designed Spanish mode.
+- The duplicate check on create isn't a branch in the call flow yet. A
+  registered patient who starts a *new* registration with the same phone,
+  name and DOB hears Sarah say there was trouble saving, instead of being
+  offered to update.
+- The call flow was designed and tested mostly in English. Other languages
+  rely on the model's translation of the same prompts.
 - Verification is exact match (case-insensitive), with no lockout across
   calls after repeated failures.
-- Appointment slots are mock data (weekdays, two providers, two weeks), with
-  no reschedule or cancel.
 - A single shared API key, not per-user auth.
 - The collected payload and transcripts are logged to stdout because the
   brief asks for it, and every log event is also kept in MongoDB's `logs`
@@ -132,10 +140,10 @@ in [`docs/security.md`](docs/security.md).
 
 ## Next steps
 
-- Wire duplicate detection and first-appointment booking into the call flow.
+- Branch the call flow on a duplicate at create (offer to verify and update).
 - Lockout and human escalation after repeated failed verifications.
 - Per-user dashboard auth, and PHI redaction in logs.
-- A real scheduling integration, with reschedule and cancel.
+- Scheduling as its own line or agent, backed by a provider calendar.
 - Fuzzy matching for names in verification and duplicate detection.
 - In production, ship stdout as JSON to a log platform (Datadog, Grafana Loki)
   instead of storing logs in the application database, and replace

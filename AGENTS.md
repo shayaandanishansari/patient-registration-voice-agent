@@ -9,9 +9,10 @@ pre-registration. The brief (`docs/CONFIDENTIAL/`, gitignored — candidate-only
 specifies a registration flow, a patient data model, a REST API (full CRUD on `/patients`
 with a `{data, error}` envelope and soft delete), and bonuses (duplicate detection,
 appointment scheduling, Spanish, transcripts, dashboard, tests). The core brief, transcripts,
-dashboard and tests are done. Duplicate detection and scheduling exist in the backend
-(tested, and the REST API uses the duplicate check) but are not wired into the voice flow,
-and there is no Spanish mode. See the root `README.md` for the reviewer-facing summary.
+dashboard and tests are done. Returning callers verify and update instead of re-registering,
+and the agent runs in 12 locales (Spanish included). Scheduling is deliberately out of
+scope: it was removed from `main` and kept on the `feature/appointment-scheduling` branch.
+See the root `README.md` (Bonus challenges) for the reviewer-facing summary.
 
 ## Where we are
 
@@ -51,8 +52,8 @@ phone line this is. Briefly:
   Phone alone isn't identity (households share lines). The backend implements it; the
   voice flow has no branch for it yet, so a duplicate registration by phone falls to the
   System Error node (open item in `TODO.md`).
-- **Scheduling** is the same coordinator doing an adjacent task (first appointment only).
-  Built in the backend, deliberately not enabled in the voice flow.
+- **Scheduling** is out of scope for this line: callers are sent to the front desk. A mock
+  scheduling backend lives on the `feature/appointment-scheduling` branch, not on `main`.
 - A caller who describes a medical emergency is told to hang up and call 911 (scope rule
   in the global prompt; there is no opening disclaimer).
 
@@ -80,7 +81,7 @@ dependencies installed. Layered layout:
 - `app/main.py` — app factory, lifespan (migrate → indexes → schema validator), exception
   handlers, routers.
 - `app/core/` — shared infrastructure: `config.py` (pydantic-settings), `database.py`
-  (Motor client, `Database` wrapper with `patients`/`calls`/`appointments` and all indexes,
+  (Motor client, `Database` wrapper with `patients`/`calls`/`logs` and all indexes,
   `DbDep`), `db_schema.py` (patients `$jsonSchema`), `migrations.py` (legacy record
   upgrade), `security.py` (Retell signature, API key, and the browser login + session
   cookie for `/dashboard` and `/docs`; see `docs/security.md`), `errors.py` (envelope error
@@ -100,12 +101,11 @@ dependencies installed. Layered layout:
   response wrappers.
 - `app/services/` — business logic. `patients.py` (create with duplicate check +
   idempotency, verify, update with `update_history`, soft delete, payload logging),
-  `calls.py` (per-call verification/registration state), `appointments.py` (mock slots,
-  booking).
-- `app/routers/` — `patients.py` (CRUD), `calls.py`, `appointments.py`, `logs.py`
+  `calls.py` (per-call verification/registration state).
+- `app/routers/` — `patients.py` (CRUD), `calls.py`, `logs.py`
   (read the `logs` collection by time range, level, event, call), `stats.py`
   (headline counts for the dashboard homepage), `health.py`,
-  `retell_tools.py` (7 tool endpoints under `/retell/tools/*`; the flow uses 4; its
+  `retell_tools.py` (5 tool endpoints under `/retell/tools/*`; the flow uses 4; its
   route class logs each call's args and response once),
   `retell_webhook.py` (idempotent upsert by `call_id`, logs the full body, never
   touches verification state; its GET probe is the only public route besides `/health`),
@@ -121,7 +121,7 @@ dependencies installed. Layered layout:
 ## Dashboard (`dashboard/`)
 
 Vite + React + TS, TanStack Query, React Router, Tailwind. Feature folders (`patients`,
-`calls`, `appointments`, `logs`, `stats`) that never import each other; cross-feature pages
+`calls`, `logs`, `stats`) that never import each other; cross-feature pages
 (including the Overview homepage at `/`) are composed in `src/app/routes.tsx`. API types are generated from the backend's OpenAPI
 (`npm run gen:api`). TypeScript is pinned to 6.x because TS 7 lacks the compiler API
 `openapi-typescript` needs. See `dashboard/ARCHITECTURE.md`.
