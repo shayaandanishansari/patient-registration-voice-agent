@@ -13,6 +13,10 @@ log = EventLogger("app.core.db_schema")
 _STRING = {"bsonType": "string"}
 _OPTIONAL_STRING = {"bsonType": ["string", "null"]}
 _PHONE = r"^[0-9]{10}$"
+# Letters and marks in any script (José, Nguyễn), matching
+# app.core.validation.normalize_name. MongoDB's regex engine is PCRE, which
+# understands \p{L} / \p{M}.
+_NAME = r"^[\p{L}\p{M} .'-]{1,50}$"
 
 # Database-level enforcement of docs/patient_field_spec.xlsx. The application
 # validates (and normalizes) first, with speakable messages; this is the
@@ -43,8 +47,8 @@ PATIENT_SCHEMA = {
                 "pattern": r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
             },
             "member_id": {**_STRING, "pattern": r"^[0-9]{8}$"},
-            "first_name": {**_STRING, "pattern": r"^[A-Za-z .'-]{1,50}$"},
-            "last_name": {**_STRING, "pattern": r"^[A-Za-z .'-]{1,50}$"},
+            "first_name": {**_STRING, "pattern": _NAME},
+            "last_name": {**_STRING, "pattern": _NAME},
             "date_of_birth": {**_STRING, "pattern": r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
             "sex": {"enum": list(SEX_VALUES)},
             "phone_number": {**_STRING, "pattern": _PHONE},

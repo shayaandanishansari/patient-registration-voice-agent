@@ -44,6 +44,24 @@ class TestName:
         with pytest.raises(ValidationError):
             normalize_name("a" * 51, "first name")
 
+    @pytest.mark.parametrize(
+        "name", ["José", "Zoë", "Nguyễn", "Müller", "Peña", "Łukasz", "अनिल", "李"]
+    )
+    def test_accepts_letters_in_any_script(self, name):
+        assert normalize_name(name, "first name") == name
+
+    def test_composes_decomposed_accents(self):
+        # "e" + combining acute, as some keyboards and models produce it.
+        assert normalize_name("Jose\u0301", "first name") == "José"
+
+    def test_straightens_curly_apostrophe(self):
+        assert normalize_name("O\u2019Brien", "last name") == "O'Brien"
+
+    @pytest.mark.parametrize("name", ["Jane😀", "Jane_Doe", "Jane!", "J4ne"])
+    def test_still_rejects_symbols_and_digits(self, name):
+        with pytest.raises(ValidationError):
+            normalize_name(name, "first name")
+
 
 class TestDateOfBirth:
     def test_accepts_iso(self):

@@ -1,11 +1,20 @@
 import re
+import unicodedata
 from datetime import date
 
 import phonenumbers
 from email_validator import EmailNotValidError, validate_email as _validate_email
 
-NAME_PATTERN = re.compile(r"^[A-Za-z .'-]{1,50}$")
-FULL_NAME_PATTERN = re.compile(r"^[A-Za-z .'-]{1,100}$")
+# Names allow letters in any script, not just A-Z: the line serves Spanish and
+# other languages, so José, Zoë, Nguyễn and Müller must register (and the
+# caller can't "fix" a name that is already correct). Plus space . ' - for
+# names like "Mary Ann", "St. John", "O'Brien", "Smith-Jones".
+NAME_PUNCTUATION = " .'-"
+NAME_MAX_LENGTH = 50
+FULL_NAME_MAX_LENGTH = 100
+# Curly and modifier apostrophes that a model or keyboard may produce for
+# O'Brien. Stored and compared as a plain apostrophe.
+_APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u02bc": "'"})
 LANGUAGE_PATTERN = re.compile(r"^[A-Za-z ()-]{2,50}$")
 INSURANCE_MEMBER_ID_PATTERN = re.compile(r"^[A-Z0-9]{1,30}$")
 ZIP_PATTERN = re.compile(r"^\d{5}(-\d{4})?$")
@@ -62,11 +71,28 @@ class ValidationError(ValueError):
     """Raised with a short, speakable, field-specific message."""
 
 
+def clean_name_text(value: str | None) -> str:
+    """The canonical form a name is stored and compared in: NFC (so "é" is
+    one character however it was typed), straight apostrophes, single
+    spaces, trimmed. Verification and duplicate checks use it too, so
+    "O’Brien" matches a stored "O'Brien"."""
+    text = unicodedata.normalize("NFC", value or "").translate(_APOSTROPHES)
+    return re.sub(r"\s+", " ", text.strip())
+
+
+def _is_name(text: str, max_length: int) -> bool:
+    # Unicode letters (L*) and combining marks (M*, for scripts like
+    # Devanagari that keep vowel signs separate even after NFC).
+    return 1 <= len(text) <= max_length and all(
+        ch in NAME_PUNCTUATION or unicodedata.category(ch)[0] in "LM" for ch in text
+    )
+
+
 def normalize_name(value: str, field_label: str) -> str:
-    trimmed = re.sub(r"\s+", " ", (value or "").strip())
+    trimmed = clean_name_text(value)
     if not trimmed:
         raise ValidationError(f"I need a {field_label} to continue.")
-    if not NAME_PATTERN.match(trimmed):
+    if not _is_name(trimmed, NAME_MAX_LENGTH):
         raise ValidationError(
             f"The {field_label} can only have letters, spaces, hyphens, "
             f"apostrophes, and periods."
@@ -194,10 +220,10 @@ def normalize_member_id(value: str) -> str:
 
 
 def normalize_full_name(value: str, field_label: str) -> str:
-    trimmed = re.sub(r"\s+", " ", (value or "").strip())
+    trimmed = clean_name_text(value)
     if not trimmed:
         raise ValidationError(f"I need the {field_label} to continue.")
-    if not FULL_NAME_PATTERN.match(trimmed):
+    if not _is_name(trimmed, FULL_NAME_MAX_LENGTH):
         raise ValidationError(
             f"The {field_label} can only have letters, spaces, hyphens, "
             f"apostrophes, and periods."

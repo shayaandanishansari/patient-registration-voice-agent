@@ -55,3 +55,26 @@ async def test_verification_attempts_increments_even_on_failure(client, db):
     call_doc = await db.calls.find_one({"call_id": call_id})
     assert call_doc["verification_attempts"] == 1
     assert call_doc.get("verified_patient_id") is None
+
+
+async def test_verify_accented_and_curly_apostrophe_names(client):
+    from tests.conftest import VOICE_ARGS
+
+    member_id = (
+        await register_by_voice(
+            client,
+            "call-register-accent",
+            {**VOICE_ARGS, "first_name": "José", "last_name": "O'Brien"},
+        )
+    )["member_id"]
+    assert member_id
+
+    result = await verify_by_voice(
+        client,
+        "call-verify-accent",
+        member_id,
+        first_name="JOSÉ",
+        last_name="O\u2019Brien",
+    )
+    assert result == {"verification_result": "verified"}
+

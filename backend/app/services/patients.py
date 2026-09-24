@@ -40,7 +40,12 @@ from app.models.patients import (
     PatientUpdate,
     first_error_message,
 )
-from app.core.validation import ValidationError, normalize_member_id, parse_date_of_birth
+from app.core.validation import (
+    ValidationError,
+    clean_name_text,
+    normalize_member_id,
+    parse_date_of_birth,
+)
 
 log = EventLogger("app.services.patients")
 
@@ -62,8 +67,11 @@ VOICE_UPDATABLE_FIELDS = tuple(
     f for f in PATIENT_FIELDS if f not in VOICE_READ_ONLY_FIELDS
 )
 
-# Earlier versions of the Retell flow used these argument names; accept them
-# so a flow and backend deployed a few minutes apart still work together.
+# The Retell flow (assets/retell_agent_scripts/agent.json) sends these
+# argument names today: create_patient and update_patient_profile use phone,
+# address_line1 and address_line2. They map onto the model's field names here.
+# Not legacy: removing an entry breaks live calls. tests/test_flow_contract.py
+# checks the flow's argument names against this mapping.
 LEGACY_ARG_NAMES = {
     "phone": "phone_number",
     "address_line1": "address_line_1",
@@ -412,8 +420,8 @@ async def verify_patient(db: Database, args: dict[str, Any]) -> str | None:
         member_id = normalize_member_id(args.get("member_id", ""))
     except ValidationError:
         member_id = ""
-    first_name = " ".join((args.get("first_name") or "").split()).lower()
-    last_name = " ".join((args.get("last_name") or "").split()).lower()
+    first_name = clean_name_text(args.get("first_name")).lower()
+    last_name = clean_name_text(args.get("last_name")).lower()
     try:
         dob = parse_date_of_birth(args.get("date_of_birth", ""))
     except ValidationError:

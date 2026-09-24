@@ -129,7 +129,7 @@ served at `/dashboard`, behind the same key.
 |---|---|---|
 | `patient_id` | UUID string | Auto. The REST resource ID. |
 | `member_id` | 8 digits | Auto. The ID the caller hears and later reads back to verify (a UUID can't be spoken). |
-| `first_name`, `last_name` | string | 1–50 chars. Letters, hyphens, apostrophes (plus spaces/periods for names like "Mary Ann", "St. John"). |
+| `first_name`, `last_name` | string | 1–50 chars. Letters in any script (José, Zoë, Nguyễn), hyphens, apostrophes (curly ones are straightened), plus spaces/periods for names like "Mary Ann", "St. John". |
 | `date_of_birth` | `YYYY-MM-DD` | Accepts MM/DD/YYYY, ISO, or "March 5, 1990". Not in the future, not over 120 years ago. |
 | `sex` | enum | `Male`, `Female`, `Other`, `Decline to Answer` |
 | `phone_number`, `emergency_contact_phone` | 10 digits | Valid U.S. (NANP) number. Formatting stripped. |
