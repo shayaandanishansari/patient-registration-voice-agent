@@ -9,8 +9,8 @@ disagree, so it stays current.
 
 | Auth | Who uses it | How |
 |---|---|---|
-| **API key** | Staff tools, the dashboard, scripts | `X-API-Key: <key>` header, or the session cookie the dashboard gets at sign-in |
-| **Browser login** | People opening a page (dashboard, API docs) | The browser's login prompt: any username, the API key as password. Sets the session cookie |
+| **API key** | Staff tools, the dashboard, scripts | `X-API-Key: <key>` header, or the session cookie the dashboard gets when opened |
+| **Browser login** | People opening the API docs pages (the dashboard itself is open) | The browser's login prompt: any username, the API key as password. Sets the session cookie |
 | **Retell signature** | Retell's servers during and after a call | `X-Retell-Signature`, checked against `RETELL_API_KEY` |
 | **Public** | Railway, Retell's connectivity test | Nothing. These routes return no data |
 
@@ -73,8 +73,8 @@ read or change the wrong record.
 | Method | Path | Auth | What it does |
 |---|---|---|---|
 | `GET` | `/health` | Public | Liveness and database check. Railway's health check uses it. `503` if MongoDB is unreachable. |
-| `GET` | `/dashboard` | Browser login | Redirects to `/dashboard/`. |
-| `GET` | `/dashboard/{path}` | Browser login | The staff dashboard. Any path that isn't a file returns the app, and React Router picks the page. |
+| `GET` | `/dashboard` | Public | Redirects to `/dashboard/`. |
+| `GET` | `/dashboard/{path}` | Public | The dashboard (open: this is a demo with test data). Any path that isn't a file returns the app, and React Router picks the page. Opening it sets the session cookie its API calls use. |
 | `GET` | `/docs` | Browser login | Swagger UI for the REST API. |
 | `GET` | `/redoc` | Browser login | The same schema in ReDoc. |
 | `GET` | `/openapi.json` | Browser login | The OpenAPI schema. The dashboard's TypeScript types are generated from it. |

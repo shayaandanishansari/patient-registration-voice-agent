@@ -50,18 +50,18 @@ async def test_missing_build_is_404(client, tmp_path, monkeypatch):
     assert response.status_code == 404
 
 
-async def test_dashboard_needs_the_api_key(client, built_dashboard):
-    for path in ("/dashboard", "/dashboard/", "/dashboard/assets/index-abc.js"):
-        response = await client.get(path)
-        assert response.status_code == 401
-        assert response.headers["www-authenticate"].startswith("Basic")
+async def test_dashboard_pages_need_no_login(client, built_dashboard):
+    assert (await client.get("/dashboard/")).status_code == 200
+    assert (await client.get("/dashboard/assets/index-abc.js")).status_code == 200
+    assert (await client.get("/dashboard/patients/1234")).status_code == 200
 
 
-async def test_dashboard_login_lets_its_api_calls_through(client, built_dashboard):
-    import base64
+async def test_api_still_needs_the_key_without_the_cookie(client, built_dashboard):
+    assert (await client.get("/patients")).status_code == 401
 
-    basic = base64.b64encode(f"reviewer:{TEST_API_KEY}".encode()).decode()
-    index = await client.get("/dashboard/", headers={"Authorization": f"Basic {basic}"})
+
+async def test_opening_the_dashboard_lets_its_api_calls_through(client, built_dashboard):
+    index = await client.get("/dashboard/")
     assert index.status_code == 200
     set_cookie = index.headers["set-cookie"]
     assert "HttpOnly" in set_cookie and "SameSite=strict" in set_cookie

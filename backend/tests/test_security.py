@@ -43,9 +43,14 @@ async def test_properly_signed_request_accepted(client):
     assert response.json()["status"] == "not_verified"
 
 
-# Routes anyone may reach: the healthcheck and the webhook reachability probe.
+# Routes anyone may reach: the healthcheck, the webhook reachability probe and
+# the demo dashboard (static app; its data calls still need the key or cookie).
 PUBLIC_PATHS = {"/health"}
-PUBLIC_ROUTES = {("GET", "/retell/webhook")}
+PUBLIC_ROUTES = {
+    ("GET", "/retell/webhook"),
+    ("GET", "/dashboard"),
+    ("GET", "/dashboard/{path:path}"),
+}
 
 
 def _protected_routes(app):

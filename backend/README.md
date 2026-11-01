@@ -119,7 +119,7 @@ to a log platform instead.
 
 **The dashboard is served by the backend.** Railway builds only Python, so
 the dashboard's production build is committed in `assets/dashboard/` and
-served at `/dashboard`, behind the same key.
+served at `/dashboard`. It is open (no login): this is a demo with test data.
 
 ## Data model
 
@@ -182,7 +182,7 @@ List endpoints add `"meta": { "limit": 20, "next_cursor": "..." }`. Pass
 | GET | `/stats` | Headline counts for the dashboard: live calls, calls and new patients in the last 24h, average call duration, totals, possible duplicates, errors and warnings |
 | GET | `/health` | No auth. Checks the database connection. |
 | GET | `/docs`, `/redoc`, `/openapi.json` | API docs. The browser asks for a login (any username, the API key as password); `/openapi.json` also takes the header. |
-| GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Needs the key: the browser asks for a login (any username, the API key as password), then a session cookie covers the dashboard's API calls. |
+| GET | `/dashboard` | The web dashboard (pre-built from `../dashboard`, committed in `assets/dashboard/`). Open, no login: opening it sets a session cookie that covers the dashboard's API calls. |
 
 Every route, including the Retell and dashboard ones, with its auth, is listed in
 [`../docs/api-routes.md`](../docs/api-routes.md) (kept in step with the app by

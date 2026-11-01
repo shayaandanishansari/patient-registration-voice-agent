@@ -2,19 +2,20 @@
 /dashboard/, so reviewers get it from the same URL as the API. The build is
 committed under assets/dashboard/ because Railway only builds Python here.
 
-The page needs the API key (the browser's login prompt), and the response
-sets the session cookie the dashboard's API calls then use."""
+This is a demo with test data only, so the page is open: no login. Opening the
+app sets the session cookie the dashboard's API calls then use. Direct API
+calls without that cookie still need X-API-Key."""
 
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 
-from app.core.security import require_browser_access, set_session_cookie
+from app.core.security import set_session_cookie
 
 DASHBOARD_DIR = Path(__file__).resolve().parents[2] / "assets" / "dashboard"
 
-router = APIRouter(include_in_schema=False, dependencies=[Depends(require_browser_access)])
+router = APIRouter(include_in_schema=False)
 
 
 @router.get("/dashboard")
