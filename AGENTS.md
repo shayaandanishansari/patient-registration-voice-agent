@@ -17,7 +17,7 @@ See the root `README.md` (Bonus challenges) for the reviewer-facing summary.
 ## Where we are
 
 Backend, agent flow and dashboard are built, and the backend is deployed on Railway at
-`https://patient-registration-voice-agent-production-f401.up.railway.app` (auto-deploys
+`https://voice-agent.shayaandanishansari.com` (auto-deploys
 from `main`).
 
 - **Railway variables** come from `backend/.env.production` (gitignored), pasted into the

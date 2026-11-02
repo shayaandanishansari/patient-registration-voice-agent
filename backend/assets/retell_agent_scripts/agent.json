@@ -466,7 +466,7 @@
           "create_message": "message"
         },
         "description": "Save a new patient registration. Only call after the caller has confirmed the full read-back summary.",
-        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/create-patient",
+        "url": "https://voice-agent.shayaandanishansari.com/retell/tools/create-patient",
         "args_at_root": false,
         "tool_id": "tool_create_patient",
         "type": "custom",
@@ -598,7 +598,7 @@
         "response_variables": {
           "verification_result": "verification_result"
         },
-        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/verify-patient",
+        "url": "https://voice-agent.shayaandanishansari.com/retell/tools/verify-patient",
         "method": "POST",
         "type": "custom"
       },
@@ -613,7 +613,7 @@
         "type": "custom",
         "description": "Get the verified caller's own registration details. Takes no arguments; the backend knows who is verified on this call.",
         "speak_during_execution": false,
-        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/get-patient",
+        "url": "https://voice-agent.shayaandanishansari.com/retell/tools/get-patient",
         "method": "POST"
       },
       {
@@ -660,7 +660,7 @@
         "enable_typing_sound": true,
         "tool_id": "tool_update_patient",
         "type": "custom",
-        "url": "https://patient-registration-voice-agent-production-f401.up.railway.app/retell/tools/update-patient",
+        "url": "https://voice-agent.shayaandanishansari.com/retell/tools/update-patient",
         "execution_message_description": "Briefly tell the caller you're updating their details now and it will just take a moment.",
         "speak_during_execution": true,
         "timeout_ms": 10000

@@ -212,7 +212,7 @@ trace). Unknown body fields are rejected with 422, and every string goes
 through its field's normalizer before it touches the database.
 
 ```bash
-export BASE=https://patient-registration-voice-agent-production-f401.up.railway.app
+export BASE=https://voice-agent.shayaandanishansari.com
 export KEY=...   # API_KEY
 
 curl "$BASE/patients?last_name=doe" -H "x-api-key: $KEY"

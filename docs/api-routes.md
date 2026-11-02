@@ -1,7 +1,7 @@
 # API routes
 
 Every route the backend serves, grouped by who calls it. Base URL:
-`https://patient-registration-voice-agent-production-f401.up.railway.app`.
+`https://voice-agent.shayaandanishansari.com`.
 `backend/tests/test_api_routes_doc.py` fails if this list and the app's routes
 disagree, so it stays current.
 

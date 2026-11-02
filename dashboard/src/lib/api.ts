@@ -2,14 +2,14 @@ import type { components } from "@/types/api";
 
 import { COOKIE_AUTH, getApiKey } from "./apiKey";
 
-const RAILWAY_URL = "https://patient-registration-voice-agent-production-f401.up.railway.app";
+const LIVE_URL = "https://voice-agent.shayaandanishansari.com";
 
 // Served by the backend itself (the "embedded" build at /dashboard/): call the
-// same server. Standalone: VITE_API_BASE_URL, else the Railway deployment.
+// same server. Standalone: VITE_API_BASE_URL, else the live deployment.
 export const API_BASE_URL: string =
   import.meta.env.MODE === "embedded"
     ? window.location.origin
-    : import.meta.env.VITE_API_BASE_URL || RAILWAY_URL;
+    : import.meta.env.VITE_API_BASE_URL || LIVE_URL;
 
 type ErrorBody = components["schemas"]["ApiError"];
 export type ListMeta = components["schemas"]["ListMeta"];

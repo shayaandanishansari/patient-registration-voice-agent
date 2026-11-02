@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "gen:api": "openapi-typescript https://patient-registration-voice-agent-production-f401.up.railway.app/openapi.json -o src/types/api.d.ts",
+    "gen:api": "openapi-typescript https://voice-agent.shayaandanishansari.com/openapi.json -o src/types/api.d.ts",
     "thumbnails": "node scripts/thumbnails.mjs"
   },
   "dependencies": {

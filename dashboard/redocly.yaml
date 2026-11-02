@@ -3,6 +3,6 @@
 resolve:
   http:
     headers:
-      - matches: https://patient-registration-voice-agent-production-f401.up.railway.app/**
+      - matches: https://voice-agent.shayaandanishansari.com/**
         name: X-API-Key
         envVariable: API_KEY
